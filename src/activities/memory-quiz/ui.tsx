@@ -33,24 +33,24 @@ function Editor({
 }) {
   return (
     <div className="space-y-6">
-      <Field label="Question">
+      <Field label="Domanda">
         <Textarea
           value={config.question}
           onChange={(event) => onChange({ ...config, question: event.target.value })}
         />
       </Field>
-      <Field label="Scoring">
+      <Field label="Punteggio">
         <Select
           className="w-auto"
           value={quizScoring(config)}
           onChange={(scoring) => onChange({ ...config, scoring: scoring as "points" | "first" })}
           options={[
-            { value: "points", label: "Points: every correct answer scores, faster ones more" },
-            { value: "first", label: "First correct answer wins and closes the quiz" },
+            { value: "points", label: "Punti: ogni risposta corretta vale punti, di più se è veloce" },
+            { value: "first", label: "La prima risposta corretta vince e chiude il quiz" },
           ]}
         />
       </Field>
-      <Field label="Answer format">
+      <Field label="Formato della risposta">
         <Select
           className="w-auto"
           value={config.answerMode ?? "text"}
@@ -62,16 +62,16 @@ function Editor({
             })
           }
           options={[
-            { value: "text", label: "Free text" },
-            { value: "choice", label: "Choose an option" },
-            { value: "order", label: "Put items in order" },
+            { value: "text", label: "Testo libero" },
+            { value: "choice", label: "Scegli un'opzione" },
+            { value: "order", label: "Metti gli elementi in ordine" },
           ]}
         />
       </Field>
       {config.answerMode && (
         <Field
-          label="Options / items (one per line; 2–4 choices, 2–6 ordered items)"
-          hint="Blank lines are ignored."
+          label="Opzioni / elementi (uno per riga; 2–4 opzioni, 2–6 elementi da ordinare)"
+          hint="Le righe vuote vengono ignorate."
         >
           <Textarea
             value={(config.choices ?? []).join("\n")}
@@ -80,8 +80,8 @@ function Editor({
         </Field>
       )}
       <Field
-        label="Accepted answers (hidden from participants)"
-        hint="One exact answer per line; blank lines are ignored. For ordering, separate the items with →. Case, whitespace and trailing . ! ? are ignored."
+        label="Risposte accettate (nascoste ai partecipanti)"
+        hint="Una risposta esatta per riga; le righe vuote vengono ignorate. Per gli ordinamenti, separa gli elementi con →. Maiuscole, spazi e . ! ? finali vengono ignorati."
       >
         <Textarea
           value={config.acceptedAnswers.join("\n")}
@@ -90,8 +90,8 @@ function Editor({
       </Field>
       <p className="text-sm text-slate-500">
         {quizScoring(config) === "points"
-          ? "Answers stay hidden until you reveal them. Each correct one scores up to 1000 points, down to 500 over the first 30 seconds; the fastest wins."
-          : "The first correct answer received by the server wins and immediately closes the quiz."}
+          ? "Le risposte restano nascoste finché non le riveli. Ogni risposta corretta vale fino a 1000 punti, che scendono a 500 nei primi 30 secondi; vince la più veloce."
+          : "La prima risposta corretta ricevuta dal server vince e chiude subito il quiz."}
       </p>
     </div>
   )
@@ -118,11 +118,7 @@ function Audience({
   const [saving, setSaving] = useState(false)
   /** The last answer this person tried to send, even if it arrived too late. */
   const [tried, setTried] = useState<string | null>(null)
-  const nope = useOneOf([
-    "Nope, not it. Try again!",
-    "Not quite! Have another go.",
-    "Wrong… but don't give up.",
-  ])
+  const nope = useOneOf(["No, non è questa. Riprova!", "Non proprio! Riprova.", "Sbagliato… ma non mollare."])
   const withPoints = quizScoring(config) === "points"
   useEffect(() => {
     setAnswer(response?.answer ?? (config.answerMode === "order" ? (config.choices?.join(" → ") ?? "") : ""))
@@ -158,7 +154,7 @@ function Audience({
       />
     ) : (
       <label className="block space-y-2.5">
-        <span className="block text-sm text-slate-500">Your answer</span>
+        <span className="block text-sm text-slate-500">La tua risposta</span>
         <input
           value={answer}
           onChange={(event) => setAnswer(event.target.value)}
@@ -181,11 +177,11 @@ function Audience({
             <QuizVerdict {...outcome} tried={tried ?? response?.answer} />
           )
         ) : (
-          <Verdict tone="info" icon="hourglass" title="Answers locked">
-            {withPoints ? "Drumroll… the answer is coming up." : "Eyes on the presentation…"}
+          <Verdict tone="info" icon="hourglass" title="Risposte bloccate">
+            {withPoints ? "Rullo di tamburi… sta arrivando la risposta." : "Guarda la presentazione…"}
           </Verdict>
         )}
-        {response && <ShowHide label="your answer">{answerArea}</ShowHide>}
+        {response && <ShowHide label="la tua risposta">{answerArea}</ShowHide>}
       </div>
     )
   }
@@ -195,15 +191,15 @@ function Audience({
       <ShownAs name={me.name} />
       {answerArea}
       <SubmitButton disabled={!dirty || saving} onClick={() => void send()}>
-        {saving ? "Sending…" : response ? "Update answer" : "Send answer"}
+        {saving ? "Invio…" : response ? "Aggiorna risposta" : "Invia risposta"}
       </SubmitButton>
       <Hint>
         {withPoints
-          ? "Every correct answer scores, faster ones more. The answer is revealed at the end."
-          : "The first correct answer wins and closes the quiz."}
+          ? "Ogni risposta corretta vale punti, di più se è veloce. La risposta viene rivelata alla fine."
+          : "La prima risposta corretta vince e chiude il quiz."}
       </Hint>
       {response && !dirty && withPoints ? (
-        <Saved id={response}>Locked in! You can change it until the reveal.</Saved>
+        <Saved id={response}>Risposta salvata! Puoi cambiarla fino alla rivelazione.</Saved>
       ) : response && !dirty ? (
         // A right answer closes the quiz on the spot: still open means this one was wrong.
         <p key={JSON.stringify(response)} className="animate-wobble text-center font-medium text-rose-600">
@@ -212,10 +208,10 @@ function Audience({
       ) : (
         <Hint className="text-center">
           {config.answerMode === "choice"
-            ? "Choose an option."
+            ? "Scegli un'opzione."
             : config.answerMode === "order"
-              ? "Drag the items from first to last, then send."
-              : "Type your answer freely."}
+              ? "Trascina gli elementi dal primo all'ultimo, poi invia."
+              : "Scrivi liberamente la tua risposta."}
         </Hint>
       )}
     </div>
@@ -232,34 +228,36 @@ function PointsVerdict({
   youWon: boolean
   points: number | null
 }) {
-  const cheer = useOneOf(["Correct!", "Nailed it!", "Spot on!"])
+  const cheer = useOneOf(["Corretto!", "Centro!", "Esatto!"])
   const correct = draw.correct ?? 0
   const others = correct - 1
   if (youWon) {
     return (
-      <Verdict solution tone="win" icon="zap" title="Fastest correct answer!" points={points}>
-        “{draw.answer}” was right, and nobody beat you to it.
+      <Verdict solution tone="win" icon="zap" title="La risposta corretta più veloce!" points={points}>
+        “{draw.answer}” era la risposta giusta, e nessuno ti ha battuto sul tempo.
       </Verdict>
     )
   }
   if (points) {
     return (
       <Verdict solution tone="win" icon="circle-check" title={cheer} points={points}>
-        “{draw.answer}” was right
-        {others > 0 ? `, like ${others === 1 ? "one other person" : `${others} others`}.` : "."}{" "}
-        {draw.winner && `${draw.winner.name} was the fastest.`}
+        “{draw.answer}” era la risposta giusta
+        {others > 0 ? `, come ${others === 1 ? "un'altra persona" : `altre ${others} persone`}.` : "."}{" "}
+        {draw.winner && `${draw.winner.name} ha risposto più velocemente.`}
       </Verdict>
     )
   }
   const rightLine =
-    correct === 0 ? "Nobody got it!" : `${correct} ${correct === 1 ? "person" : "people"} got it right.`
+    correct === 0
+      ? "Nessuno ha indovinato!"
+      : `${correct} ${correct === 1 ? "persona ha indovinato" : "persone hanno indovinato"}.`
   return points === 0 ? (
-    <Verdict solution tone="lose" icon="circle-x" title="Not quite" points={points}>
-      The answer was “{draw.answer}”. {rightLine}
+    <Verdict solution tone="lose" icon="circle-x" title="Non proprio" points={points}>
+      La risposta era “{draw.answer}”. {rightLine}
     </Verdict>
   ) : (
-    <Verdict solution tone="info" icon="lightbulb" title="Answer revealed">
-      The answer was “{draw.answer}”. {rightLine} Join in on the next one!
+    <Verdict solution tone="info" icon="lightbulb" title="Risposta rivelata">
+      La risposta era “{draw.answer}”. {rightLine} Partecipa alla prossima!
     </Verdict>
   )
 }
@@ -275,27 +273,27 @@ function QuizVerdict({
   points: number | null
   tried: string | undefined
 }) {
-  const cheer = useOneOf(["You got it first!", "Big brain!", "Fastest fingers!"])
+  const cheer = useOneOf(["Hai risposto per primo!", "Che intuito!", "Dita velocissime!"])
   if (youWon) {
     return (
       <Verdict solution points={points} tone="win" icon="trophy" title={cheer}>
-        “{draw.answer}” was right, and you were the quickest. You win!
+        “{draw.answer}” era la risposta giusta, e sei stato il più veloce. Hai vinto!
       </Verdict>
     )
   }
   if (!draw.winner) {
     return (
-      <Verdict solution points={points} tone="info" icon="lightbulb" title="Nobody got it!">
-        The answer was “{draw.answer}”.
+      <Verdict solution points={points} tone="info" icon="lightbulb" title="Nessuno ha indovinato!">
+        La risposta era “{draw.answer}”.
       </Verdict>
     )
   }
   const hadIt = tried !== undefined && normalizeAnswer(tried) === normalizeAnswer(draw.answer)
   return (
-    <Verdict solution points={points} tone="lose" icon="hourglass" title="Too slow!">
+    <Verdict solution points={points} tone="lose" icon="hourglass" title="Troppo tardi!">
       {hadIt
-        ? `You had it right, but ${draw.winner.name} was faster.`
-        : `${draw.winner.name} got there first: the answer was “${draw.answer}”.`}
+        ? `La risposta era giusta, ma ${draw.winner.name} ha fatto prima.`
+        : `${draw.winner.name} ha fatto prima: la risposta era “${draw.answer}”.`}
     </Verdict>
   )
 }
@@ -303,18 +301,18 @@ function QuizVerdict({
 function Results({ results }: { config: MemoryQuizConfig; results: MemoryQuizResults }) {
   return (
     <div className="space-y-3 text-sm text-slate-700">
-      <p className="text-slate-500">{results.totalParticipants} participants</p>
+      <p className="text-slate-500">{results.totalParticipants} partecipanti</p>
       {results.draw && (
         <>
-          <p className="label-caps">Answer</p>
+          <p className="label-caps">Risposta</p>
           <p className="font-display text-2xl font-medium tracking-tight text-pn">{results.draw.answer}</p>
           <p className="font-medium">
             {results.draw.winner
-              ? `${results.draw.correct === undefined ? "First" : "Fastest"} correct answer: ${results.draw.winner.name}`
-              : "No correct answer."}
+              ? `${results.draw.correct === undefined ? "Prima" : "Più veloce"} risposta corretta: ${results.draw.winner.name}`
+              : "Nessuna risposta corretta."}
           </p>
           {results.draw.correct !== undefined && (
-            <p className="text-slate-500">{results.draw.correct} correct answers</p>
+            <p className="text-slate-500">{results.draw.correct} risposte corrette</p>
           )}
         </>
       )}

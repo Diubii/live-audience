@@ -127,7 +127,7 @@ describe("guess a real number", () => {
       store.setStage(activity.id, "open")
       for (const [index, number] of [48, 52, 80].entries())
         store.respond(activity.id, { id: `private-${index}`, name: `Guest ${index}` }, { number })
-      expect(() => store.updateActivity(activity.id, { config: { ...config, target: 80 } })).toThrow("Reset")
+      expect(() => store.updateActivity(activity.id, { config: { ...config, target: 80 } })).toThrow("Azzera")
       expect(JSON.stringify(store.getResults(activity.id))).not.toContain("Guest")
       expect(JSON.stringify(store.getResults(activity.id))).not.toContain('"target"')
       const app = createApp({
@@ -154,7 +154,7 @@ describe("guess a real number", () => {
       expect(store.getStage().status).toBe("closed")
       expect(store.drawActivity(activity.id)).toEqual(draw)
       expect(new Store(db).getResults(activity.id)).toEqual(draw)
-      expect(() => store.setStage(activity.id, "open")).toThrow("Reset")
+      expect(() => store.setStage(activity.id, "open")).toThrow("Azzera")
       store.resetResponses(activity.id)
       store.updateActivity(activity.id, { config })
       store.setStage(activity.id, "open")

@@ -172,7 +172,7 @@ describe("points", () => {
     const app = createApp({
       store,
       session: async (c, next) => {
-        c.set("user", { id: "private-id", name: "Name private-id", canParticipate: true, isAdmin: false })
+        c.set("user", { id: "private-id", name: "Name private-id", isAdmin: false })
         await next()
       },
     })

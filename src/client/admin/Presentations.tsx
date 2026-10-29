@@ -44,10 +44,10 @@ export function PresentationList() {
   return (
     <div className="space-y-10">
       <div className="space-y-4">
-        <PageHeader kicker="Live admin" title="Presentations" />
+        <PageHeader kicker="Admin" title="Presentazioni" />
         <p className="max-w-2xl font-headline text-pretty text-slate-600">
-          Group the activities of one talk: their points add up to a leaderboard, which the audience sees
-          between activities.
+          Raggruppa le attività di una serata: i loro punti formano una classifica, che il pubblico vede tra
+          un'attività e l'altra.
         </p>
       </div>
       <Card>
@@ -58,25 +58,29 @@ export function PresentationList() {
             void create()
           }}
         >
-          <Field label="Title">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Welcome talk" />
+          <Field label="Titolo">
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Compleanno di Chiara"
+            />
           </Field>
-          <Field label="Slug (used by the API)">
+          <Field label="Slug (usato dall'API)">
             <Input
               value={effectiveSlug}
               onChange={(e) => setSlug(e.target.value)}
-              placeholder="welcome-talk"
+              placeholder="compleanno-chiara"
             />
           </Field>
           <Button type="submit" variant="primary" disabled={!title.trim() || !effectiveSlug} className="py-2">
-            <Icon name="plus" /> Create
+            <Icon name="plus" /> Crea
           </Button>
         </form>
         {error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
       </Card>
       <Card className="divide-y-[1.5px] divide-white p-0">
         {presentations.data?.length === 0 && (
-          <p className="px-6 py-5 text-sm text-slate-500">No presentations yet.</p>
+          <p className="px-6 py-5 text-sm text-slate-500">Ancora nessuna presentazione.</p>
         )}
         {presentations.data?.map((p) => {
           const answers = (activities.data ?? [])
@@ -100,7 +104,7 @@ export function PresentationList() {
                   {answerCount(answers) && <span>· {answerCount(answers)}</span>}
                 </div>
               </div>
-              {stage?.presentation?.id === p.id && <Tag tone="blue">running</Tag>}
+              {stage?.presentation?.id === p.id && <Tag tone="blue">in corso</Tag>}
               <span className="relative">
                 <PresentationResetButton presentation={p} onReset={activities.reload} />
               </span>
@@ -148,7 +152,11 @@ export function PresentationPage({ id }: { id: string }) {
     }
   }
   const remove = async () => {
-    if (!confirm(`Delete "${presentation.title}" and its leaderboard? Its activities stay, ungrouped.`))
+    if (
+      !confirm(
+        `Eliminare "${presentation.title}" e la sua classifica? Le sue attività restano, senza gruppo.`,
+      )
+    )
       return
     await api(`/api/admin/presentations/${id}`, { method: "DELETE" })
     navigate("/presentations")
@@ -162,14 +170,14 @@ export function PresentationPage({ id }: { id: string }) {
   return (
     <div className="space-y-10">
       <PageHeader
-        kicker="Presentations"
+        kicker="Presentazioni"
         back="/presentations"
         title={
           <span className="flex flex-wrap items-center gap-3">
             {presentation.title}
             {running && (
               <Tag tone="blue" className="font-sans tracking-normal">
-                running
+                in corso
               </Tag>
             )}
           </span>
@@ -177,11 +185,11 @@ export function PresentationPage({ id }: { id: string }) {
       >
         {running ? (
           <Button onClick={() => void controlPresentation(null)}>
-            <Icon name="square" /> End presentation
+            <Icon name="square" /> Termina la presentazione
           </Button>
         ) : (
           <Button variant="success" onClick={() => void controlPresentation(presentation.id)}>
-            <Icon name="play" /> Start presentation
+            <Icon name="play" /> Avvia la presentazione
           </Button>
         )}
       </PageHeader>
@@ -189,7 +197,7 @@ export function PresentationPage({ id }: { id: string }) {
       <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-8">
           <section className="space-y-4">
-            <h2 className="px-1 font-headline text-lg text-slate-800">Activities</h2>
+            <h2 className="px-1 font-headline text-lg text-slate-800">Attività</h2>
             <ActivityRows
               activities={activities.data?.filter((a) => a.presentation === presentation.slug) ?? []}
               types={types.data ?? []}
@@ -208,23 +216,23 @@ export function PresentationPage({ id }: { id: string }) {
           </section>
           <Card className="space-y-6">
             <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
-              <Field label="Title">
+              <Field label="Titolo">
                 <Input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
               </Field>
-              <Field label="Slug" hint="Presentations read the leaderboard by this.">
+              <Field label="Slug" hint="Le slide leggono la classifica con questo nome.">
                 <Input value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} />
               </Field>
             </div>
             {error && <p className="text-sm text-rose-600">{error}</p>}
             <div className="flex flex-wrap gap-2.5 border-t-[1.5px] border-white pt-5">
               <Button variant="primary" disabled={!dirty} onClick={() => void save()}>
-                Save
+                Salva
               </Button>
               <Button variant="danger" className="ml-auto" onClick={() => void reset()}>
-                <Icon name="rotate-ccw" /> Reset all answers
+                <Icon name="rotate-ccw" /> Azzera tutte le risposte
               </Button>
               <Button variant="danger" onClick={() => void remove()}>
-                <Icon name="trash" /> Delete
+                <Icon name="trash" /> Elimina
               </Button>
             </div>
           </Card>
@@ -247,13 +255,13 @@ function LeaderboardPanel({ presentation }: { presentation: PresentationSummary 
   return (
     <Card className="space-y-5 self-start">
       <div className="flex items-center justify-between">
-        <h2 className="kicker">Leaderboard</h2>
+        <h2 className="kicker">Classifica</h2>
         <Button variant="ghost" onClick={board.reload}>
-          <Icon name="rotate-ccw" /> Refresh
+          <Icon name="rotate-ccw" /> Aggiorna
         </Button>
       </div>
       {entries.length === 0 ? (
-        <p className="text-sm text-slate-500">No points yet.</p>
+        <p className="text-sm text-slate-500">Ancora nessun punto.</p>
       ) : (
         <ol className="max-h-[28rem] divide-y-[1.5px] divide-white overflow-auto text-sm">
           {entries.map((entry, index) => (
@@ -262,7 +270,7 @@ function LeaderboardPanel({ presentation }: { presentation: PresentationSummary 
               <Rank rank={entry.rank} />
               <span className="flex-1 truncate font-headline text-slate-800">{entry.name}</span>
               <span className="font-display text-base font-medium text-pn tabular-nums">
-                {entry.points.toLocaleString("en")}
+                {entry.points.toLocaleString("it")}
               </span>
             </li>
           ))}

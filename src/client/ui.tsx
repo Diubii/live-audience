@@ -22,7 +22,7 @@ export function cx(...classes: (string | false | null | undefined)[]) {
 
 const buttonVariants = {
   primary:
-    "bg-pn text-white shadow-[0_10px_24px_-12px_rgb(17_86_174/0.7)] hover:bg-pn-deep disabled:bg-pn/40 disabled:shadow-none",
+    "bg-pn text-white shadow-[0_10px_24px_-12px_rgb(25_100_126/0.7)] hover:bg-pn-deep disabled:bg-pn/40 disabled:shadow-none",
   secondary:
     "bg-white/70 text-slate-700 ring-[1.5px] ring-slate-300/80 ring-inset hover:bg-white disabled:text-slate-400",
   danger:
@@ -51,7 +51,7 @@ export function Button({
 }
 
 const fieldClass =
-  "w-full rounded-xl border-[1.5px] border-white bg-white/75 px-3 py-2 text-sm text-slate-900 shadow-[inset_0_1px_2px_rgb(17_86_174/0.08)] outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-400/20"
+  "w-full rounded-xl border-[1.5px] border-white bg-white/75 px-3 py-2 text-sm text-slate-900 shadow-[inset_0_1px_2px_rgb(25_100_126/0.08)] outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-400/20"
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cx(fieldClass, className)} {...props} />

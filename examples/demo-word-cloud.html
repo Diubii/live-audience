@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Live word cloud</title>
+    <title>Nuvola di parole dal vivo</title>
     <style>
       body { margin: 0; padding: 5vh 6vw; font-family: system-ui, sans-serif; background: #0b1b30; color: white; }
       h1 { font-size: clamp(24px, 4vw, 64px); }
@@ -14,12 +14,12 @@
     </style>
   </head>
   <body>
-    <h1 id="prompt">Word cloud</h1>
-    <p>Open PoliNetwork Live on your phone and sign in.</p>
-    <button type="button" id="open">Open answers</button>
-    <button type="button" id="close">Close answers</button>
+    <h1 id="prompt">Nuvola di parole</h1>
+    <p>Apri Quiz Live sul telefono ed entra con il tuo nome.</p>
+    <button type="button" id="open">Apri le risposte</button>
+    <button type="button" id="close">Chiudi le risposte</button>
     <p id="status" role="status"></p>
-    <section id="cloud" aria-label="Word cloud">Waiting for answers…</section>
+    <section id="cloud" aria-label="Nuvola di parole">In attesa delle risposte…</section>
     <p id="total"></p>
     <script type="module">
       // ?url=http://localhost:5173&key=<API key>&activity=gadget-ideas
@@ -39,21 +39,21 @@
         document.getElementById("open").onclick = () => run(() => live.open(slug))
         document.getElementById("close").onclick = () => run(() => live.show(slug))
         const stop = live.onResults(slug, ({ type, results }) => {
-          if (type !== "word-cloud") { status.textContent = "Choose a word-cloud activity."; return }
+          if (type !== "word-cloud") { status.textContent = "Scegli un’attività di tipo nuvola di parole."; return }
           document.getElementById("prompt").textContent = results.prompt
-          document.getElementById("total").textContent = `${results.totalRespondents} respondents`
+          document.getElementById("total").textContent = `${results.totalRespondents} risposte`
           const cloud = document.getElementById("cloud")
           cloud.replaceChildren()
           const max = results.words.reduce((value, word) => Math.max(value, word.count), 1)
           for (const { text, count } of results.words) {
             const word = document.createElement("span")
             word.textContent = text
-            word.title = `${count} respondents`
+            word.title = `${count} risposte`
             word.style.fontSize = `${18 + 64 * count / max}px`
             word.style.color = "#7dd3fc"
             cloud.append(word)
           }
-          if (!results.words.length) cloud.textContent = "Waiting for answers…"
+          if (!results.words.length) cloud.textContent = "In attesa delle risposte…"
         })
         addEventListener("pagehide", stop, { once: true })
       } catch (error) { status.textContent = error.message }

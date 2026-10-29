@@ -78,8 +78,6 @@ export function useEventStream(url: string | null, handlers: Record<string, (dat
 export interface Me {
   id: string
   name: string
-  picture?: string
-  canParticipate: boolean
   isAdmin: boolean
 }
 
@@ -92,6 +90,8 @@ export async function logout() {
   window.location.href = redirect
 }
 
-export function loginUrl(returnTo = window.location.pathname) {
-  return `/auth/login?returnTo=${encodeURIComponent(returnTo)}`
+/** Joins with `name`, or signs in as admin with the admin password too. Reloads on success. */
+export async function login(name: string, password?: string) {
+  await api("/auth/login", { body: { name, password } })
+  window.location.reload()
 }

@@ -64,6 +64,6 @@ describe("word cloud", () => {
     expect(html).not.toContain("<script>")
     expect(
       renderToStaticMarkup(<Results config={config} results={wordCloud.aggregate(config, [])} />),
-    ).toContain("Waiting for answers")
+    ).toContain("In attesa delle risposte")
   })
 })

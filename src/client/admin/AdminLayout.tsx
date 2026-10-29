@@ -1,9 +1,9 @@
-import { createContext, type ReactNode, useContext, useState } from "react"
+import { createContext, type FormEvent, type ReactNode, useContext, useState } from "react"
 import { Link, useRoute } from "wouter"
-import { api, loginUrl, logout, useEventStream, useMe } from "../api.ts"
-import { Backdrop, Wordmark } from "../brand.tsx"
+import { api, login, logout, useEventStream, useMe } from "../api.ts"
+import { Wordmark } from "../brand.tsx"
 import { Icon, type IconName } from "../icons.tsx"
-import { Button, Card, cx, Tag } from "../ui.tsx"
+import { Button, Card, cx, Field, Input, Tag } from "../ui.tsx"
 
 export interface StageInfo {
   status: "open" | "closed"
@@ -43,7 +43,7 @@ export const activitiesResetEvent = "activities-reset"
 
 /** Deletes every answer, draw and point of an activity once confirmed; tells whether it did. */
 export async function resetActivity(activity: { id: string; title: string }) {
-  if (!confirm(`Delete every answer and point of "${activity.title}"?`)) return false
+  if (!confirm(`Cancellare tutte le risposte e i punti di "${activity.title}"?`)) return false
   await api(`/api/admin/activities/${activity.id}/reset`, { method: "POST" })
   window.dispatchEvent(new Event(activitiesResetEvent))
   return true
@@ -51,7 +51,8 @@ export async function resetActivity(activity: { id: string; title: string }) {
 
 /** The same for every activity of a presentation: a fresh start for its leaderboard. */
 export async function resetPresentation(presentation: { id: string; title: string }) {
-  if (!confirm(`Delete every answer and point of every activity in "${presentation.title}"?`)) return false
+  if (!confirm(`Cancellare tutte le risposte e i punti di tutte le attività di "${presentation.title}"?`))
+    return false
   await api(`/api/admin/presentations/${presentation.id}/reset`, { method: "POST" })
   window.dispatchEvent(new Event(activitiesResetEvent))
   return true
@@ -68,42 +69,22 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   })
 
   if (me.loading && !me.data) return null
-  if (!user) {
-    window.location.href = loginUrl()
-    return null
-  }
-  if (!user.isAdmin) {
-    return (
-      <div className="relative flex min-h-dvh items-center justify-center p-6 text-center">
-        <Backdrop calm />
-        <Card className="relative max-w-md space-y-4 p-8">
-          <p className="kicker">Live admin</p>
-          <p className="font-display text-2xl font-medium tracking-tight text-slate-800">Not an admin</p>
-          <p className="text-slate-600">
-            You are signed in as <b className="font-semibold text-slate-800">{user.name}</b>, but you are not
-            an admin of this app. Ask for the admin permission in the PoliNetwork IdP.
-          </p>
-          <Button onClick={() => void logout()}>Sign out</Button>
-        </Card>
-      </div>
-    )
-  }
+  if (!user?.isAdmin) return <AdminSignIn name={user?.name} />
 
   return (
     <StageContext.Provider value={stage}>
       <div className="relative min-h-dvh text-slate-950">
-        <Backdrop calm />
         <header className="sticky top-0 z-20 px-4 pt-4">
           <div className="glass-solid mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 py-2.5 pr-2.5 pl-5 sm:rounded-full!">
             <Link href="/">
-              <Wordmark suffix="Live admin" />
+              <Wordmark suffix="Admin" />
             </Link>
             <nav className="flex flex-wrap gap-1.5 text-sm">
               <NavLink href="/" icon="list">
-                Activities
+                Attività
               </NavLink>
               <NavLink href="/presentations" icon="layers">
-                Presentations
+                Presentazioni
               </NavLink>
               <NavLink href="/api" icon="key">
                 API
@@ -114,13 +95,13 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                 rel="noreferrer"
                 className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-slate-600 transition hover:bg-white hover:text-pn"
               >
-                Audience page <Icon name="external-link" className="size-3.5" />
+                Pagina del pubblico <Icon name="external-link" className="size-3.5" />
               </a>
             </nav>
             <div className="ml-auto flex items-center gap-1.5 text-sm text-slate-600">
               <span className="hidden px-2 sm:inline">{user.name}</span>
-              <Button variant="ghost" onClick={() => void logout()} title="Sign out">
-                <Icon name="log-out" /> Sign out
+              <Button variant="ghost" onClick={() => void logout()} title="Esci">
+                <Icon name="log-out" /> Esci
               </Button>
             </div>
           </div>
@@ -129,6 +110,54 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         <main className="relative mx-auto max-w-6xl px-4 pt-10 pb-20">{children}</main>
       </div>
     </StageContext.Provider>
+  )
+}
+
+/** Name and the admin password (ADMIN_PASSWORD on the server). */
+function AdminSignIn({ name: currentName }: { name?: string }) {
+  const [name, setName] = useState(currentName ?? "")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    try {
+      await login(name, password)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Qualcosa è andato storto")
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="relative flex min-h-dvh items-center justify-center p-6">
+      <Card className="relative w-full max-w-sm p-8">
+        <form onSubmit={submit} className="space-y-4">
+          <Wordmark suffix="Admin" />
+          <p className="font-display text-2xl font-medium tracking-tight text-slate-800">Accedi</p>
+          <Field label="Nome" hint="Compare in classifica se giochi anche tu.">
+            <Input value={name} onChange={(e) => setName(e.target.value)} autoComplete="nickname" required />
+          </Field>
+          <Field label="Password admin">
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </Field>
+          {error && (
+            <p className="rounded-2xl border-[1.5px] border-rose-200 bg-rose-50/90 px-4 py-2.5 text-sm text-rose-700">
+              {error}
+            </p>
+          )}
+          <Button type="submit" variant="primary" disabled={busy} className="w-full py-2">
+            Accedi
+          </Button>
+        </form>
+      </Card>
+    </div>
   )
 }
 
@@ -196,7 +225,7 @@ function StageBar({ stage, counts }: { stage: StageInfo | null; counts: Audience
             : "bg-slate-300",
         )}
       />
-      <span className="label-caps">On stage</span>
+      <span className="label-caps">Sul palco</span>
       {stage.activity ? (
         <>
           <Link
@@ -205,28 +234,28 @@ function StageBar({ stage, counts }: { stage: StageInfo | null; counts: Audience
           >
             {stage.activity.title}
           </Link>
-          <Tag tone={open ? "live" : "warn"}>{open ? "open" : "closed"}</Tag>
+          <Tag tone={open ? "live" : "warn"}>{open ? "aperta" : "chiusa"}</Tag>
           {counts && (
-            <span className="text-slate-600 tabular-nums" title="Answers to what is on stage">
-              {counts.answered} answered
+            <span className="text-slate-600 tabular-nums" title="Risposte a ciò che è sul palco">
+              {counts.answered} {counts.answered === 1 ? "risposta" : "risposte"}
             </span>
           )}
         </>
       ) : (
-        <span className="text-slate-500">nothing, the audience sees the idle screen</span>
+        <span className="text-slate-500">niente, il pubblico vede la schermata d'attesa</span>
       )}
       {counts && (
         <span
           className="flex items-center gap-1.5 text-slate-600 tabular-nums [&>svg]:size-4"
-          title="People with the audience page open"
+          title="Persone con la pagina del pubblico aperta"
         >
-          <Icon name="users" /> {counts.connected} connected
+          <Icon name="users" /> {counts.connected} {counts.connected === 1 ? "collegata" : "collegate"}
         </span>
       )}
       {stage.presentation && (
         <Link
           href={`/presentations/${stage.presentation.id}`}
-          title="Running presentation: the audience sees its leaderboard between activities"
+          title="Presentazione in corso: tra un'attività e l'altra il pubblico ne vede la classifica"
         >
           <Tag tone="blue" className="hover:bg-sky-800">
             <Icon name="layers" /> {stage.presentation.title}
@@ -237,22 +266,22 @@ function StageBar({ stage, counts }: { stage: StageInfo | null; counts: Audience
         <span className="ml-auto flex gap-2">
           {open ? (
             <Button onClick={() => void controlStage("close")}>
-              <Icon name="lock" /> Close answers
+              <Icon name="lock" /> Chiudi le risposte
             </Button>
           ) : (
             <Button variant="success" onClick={() => void controlStage("open")}>
-              <Icon name="play" /> Open answers
+              <Icon name="play" /> Apri le risposte
             </Button>
           )}
           <Button
             variant="ghost"
-            title="Delete its answers and points"
+            title="Cancella le sue risposte e i suoi punti"
             onClick={() => stage.activity && void resetActivity(stage.activity)}
           >
-            <Icon name="rotate-ccw" /> Reset answers
+            <Icon name="rotate-ccw" /> Azzera le risposte
           </Button>
           <Button variant="ghost" onClick={() => void controlStage("clear")}>
-            Clear stage
+            Svuota il palco
           </Button>
         </span>
       )}

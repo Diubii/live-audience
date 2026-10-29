@@ -26,12 +26,12 @@ function Editor({
 }) {
   return (
     <div className="space-y-6">
-      <Field label="Question">
+      <Field label="Domanda">
         <Textarea value={config.question} onChange={(event) => onChange({ question: event.target.value })} />
       </Field>
       <p className="text-sm text-slate-500">
-        Yes requires a price in whole euros. Results use €10 bands: 0–10, 11–20, 21–30… No responses form one
-        separate bar.
+        Il sì richiede un prezzo in euro interi. I risultati usano fasce da 10 €: 0–10, 11–20, 21–30… I no
+        formano una barra separata.
       </p>
     </div>
   )
@@ -85,13 +85,13 @@ function Audience({
             }}
             className="justify-center text-xl"
           >
-            {value ? "Yes" : "No"}
+            {value ? "Sì" : "No"}
           </ChoiceButton>
         ))}
       </div>
       {buy && (
         <label className="block space-y-2.5">
-          <Hint>Maximum price you would pay (€), in whole euros</Hint>
+          <Hint>Prezzo massimo che pagheresti (€), in euro interi</Hint>
           <input
             type="number"
             min={0}
@@ -106,27 +106,29 @@ function Audience({
       )}
       {open && (
         <SubmitButton disabled={!dirty || saving} onClick={() => void send()}>
-          {saving ? "Sending…" : response ? "Update answer" : "Send answer"}
+          {saving ? "Invio…" : response ? "Aggiorna risposta" : "Invia risposta"}
         </SubmitButton>
       )}
       {!open ? (
         response?.buy ? (
-          <Verdict tone="info" icon="cart" title="Noted!">
-            You'd pay up to €{response.price}. Let's see what everyone else said.
+          <Verdict tone="info" icon="cart" title="Ricevuto!">
+            Pagheresti fino a {response.price} €. Vediamo cosa hanno risposto gli altri.
           </Verdict>
         ) : response ? (
-          <Verdict tone="info" icon="circle-check" title="Noted!">
-            Not for you, and that's useful to know too.
+          <Verdict tone="info" icon="circle-check" title="Ricevuto!">
+            Non fa per te, ed è utile sapere anche questo.
           </Verdict>
         ) : (
-          <Verdict tone="info" icon="lock" title="Answers are closed">
-            No answer from you this time.
+          <Verdict tone="info" icon="lock" title="Le risposte sono chiuse">
+            Questa volta non hai risposto.
           </Verdict>
         )
       ) : response && !dirty ? (
-        <Saved id={response}>Answer saved. You can change it until answers close.</Saved>
+        <Saved id={response}>Risposta salvata. Puoi cambiarla finché le risposte sono aperte.</Saved>
       ) : (
-        <Hint className="text-center">{buy ? "Enter the price before sending." : "Choose yes or no."}</Hint>
+        <Hint className="text-center">
+          {buy ? "Inserisci il prezzo prima di inviare." : "Scegli sì o no."}
+        </Hint>
       )}
     </div>
   )
@@ -136,7 +138,7 @@ function Results({ results }: { config: PurchaseConfig; results: PurchaseResults
   const bars = [
     { label: "No", count: results.no, percent: results.noPercent },
     ...results.bands.map((band) => ({
-      label: `Yes, ${band.label}`,
+      label: `Sì, ${band.label}`,
       count: band.count,
       percent: band.percent,
     })),
@@ -167,7 +169,7 @@ function Results({ results }: { config: PurchaseConfig; results: PurchaseResults
         ))}
       </div>
       <p className="text-xs text-slate-500">
-        {results.totalRespondents} respondents: {results.yes} yes, {results.no} no
+        {results.totalRespondents} risposte: {results.yes} sì, {results.no} no
       </p>
     </div>
   )

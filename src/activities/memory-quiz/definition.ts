@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "../../validation.ts"
 import { defineActivity, withoutBlankItems } from "../types.ts"
 
 export function normalizeAnswer(answer: string) {
@@ -25,7 +25,7 @@ const configSchema = z
     acceptedAnswers: withoutBlankItems(z.array(z.string().trim().min(1).max(120)).min(1).max(10)),
   })
   .refine((config) => config.acceptedAnswers.every((answer) => normalizeAnswer(answer).length > 0), {
-    message: "Accepted answers cannot contain only punctuation",
+    message: "Le risposte accettate non possono contenere solo punteggiatura",
     path: ["acceptedAnswers"],
   })
   .refine(
@@ -38,7 +38,10 @@ const configSchema = z
       if (config.choices.some((choice) => choice.includes("→"))) return false
       return config.acceptedAnswers.every((answer) => validStructuredAnswer(mode, config.choices, answer))
     },
-    { message: "Choices must be distinct and accepted answers must match the choices", path: ["choices"] },
+    {
+      message: "Le opzioni devono essere distinte e le risposte accettate devono corrispondere alle opzioni",
+      path: ["choices"],
+    },
   )
 
 function validStructuredAnswer(mode: "choice" | "order", choices: string[] | undefined, answer: string) {
@@ -56,7 +59,7 @@ export type MemoryQuizConfig = z.infer<typeof configSchema>
 export type MemoryQuizResponse = { answer: string }
 export type MemoryQuizDraw = {
   answer: string
-  /** `name` is the winner's name from the IdP: the first, or with points the fastest, correct answer. */
+  /** `name` is the winner's sign-in name: the first, or with points the fastest, correct answer. */
   winner: { name: string; answer: string } | null
   /** How many answers were correct. Only with points scoring. */
   correct?: number
@@ -82,12 +85,12 @@ export function isCorrect(config: MemoryQuizConfig, answer: string) {
 
 export const memoryQuiz = defineActivity<MemoryQuizConfig, MemoryQuizResponse, MemoryQuizResults>({
   type: "memory-quiz",
-  label: "Memory quiz",
+  label: "Quiz di memoria",
   description:
-    "Free text, multiple choice or ordering. The first correct answer received by the server wins.",
+    "Testo libero, scelta multipla o ordinamento. Vince la prima risposta corretta ricevuta dal server.",
   configSchema,
   defaultConfig: () => ({ question: "", scoring: "points", acceptedAnswers: [""] }),
-  drawLabel: "Reveal the answer",
+  drawLabel: "Rivela la risposta",
   responseSchema: (config) =>
     z
       .object({
@@ -96,7 +99,10 @@ export const memoryQuiz = defineActivity<MemoryQuizConfig, MemoryQuizResponse, M
       .refine(
         (response) =>
           !config.answerMode || validStructuredAnswer(config.answerMode, config.choices, response.answer),
-        { message: "Choose a valid option or order every item exactly once", path: ["answer"] },
+        {
+          message: "Scegli un'opzione valida o ordina tutti gli elementi senza ripetizioni",
+          path: ["answer"],
+        },
       ),
   // Correct answers must not be sent to participants before the result is revealed.
   audienceConfig: (config) => ({

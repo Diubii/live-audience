@@ -14,7 +14,7 @@ import { Icon, type IconName } from "./icons.tsx"
 import { cx } from "./ui.tsx"
 
 /**
- * Shared pieces of the audience side of activities: phones, glass on light blue, big and friendly.
+ * Shared pieces of the audience side of activities: phones, ivory glass on gold, big and friendly.
  * Everything of an activity should fit one phone screen without scrolling: keep it compact, and
  * put long explanations behind a button (see `Verdict`).
  */
@@ -40,7 +40,7 @@ export function Hint({ className, children }: { className?: string; children: Re
 
 /** Text and number inputs on phones. */
 export const audienceField =
-  "w-full rounded-2xl border-[1.5px] border-white bg-white/75 px-5 py-3.5 text-lg text-slate-900 shadow-[inset_0_1px_3px_rgb(17_86_174/0.1)] outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-400/20 disabled:opacity-60"
+  "w-full rounded-2xl border-[1.5px] border-white bg-white/75 px-5 py-3.5 text-lg text-slate-900 shadow-[inset_0_1px_3px_rgb(25_100_126/0.1)] outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-400/20 disabled:opacity-60"
 
 /** The big pill that sends an answer. */
 export function SubmitButton({ className, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
@@ -48,7 +48,7 @@ export function SubmitButton({ className, ...props }: ButtonHTMLAttributes<HTMLB
     <button
       type="button"
       className={cx(
-        "w-full rounded-full bg-pn px-6 py-3.5 font-headline text-lg font-medium text-white shadow-[0_16px_32px_-16px_rgb(17_86_174/0.8)] transition hover:bg-pn-deep active:scale-[0.98] disabled:bg-pn/35 disabled:shadow-none disabled:active:scale-100",
+        "w-full rounded-full bg-pn px-6 py-3.5 font-headline text-lg font-medium text-white shadow-[0_16px_32px_-16px_rgb(25_100_126/0.8)] transition hover:bg-pn-deep active:scale-[0.98] disabled:bg-pn/35 disabled:shadow-none disabled:active:scale-100",
         className,
       )}
       {...props}
@@ -71,7 +71,7 @@ export function ChoiceButton({
       className={cx(
         "flex w-full items-center gap-4 rounded-[20px] border-[1.5px] px-5 py-3.5 text-left font-headline text-[1.0625rem] transition active:scale-[0.98] disabled:cursor-default disabled:active:scale-100",
         selected
-          ? "border-pn bg-pn text-white shadow-[0_18px_36px_-18px_rgb(17_86_174/0.9)]"
+          ? "border-pn bg-pn text-white shadow-[0_18px_36px_-18px_rgb(25_100_126/0.9)]"
           : "glass text-slate-800 hover:bg-white/80 disabled:opacity-55 disabled:hover:bg-transparent",
         className,
       )}
@@ -194,7 +194,7 @@ export function SortableList({
     <ol
       ref={listRef}
       className="relative space-y-1.5 tall:space-y-2"
-      aria-label="Drag the items, or use the arrow keys"
+      aria-label="Trascina le voci, oppure usa le frecce"
     >
       {items.map((item, index) => {
         const dragged = drag?.index === index
@@ -204,7 +204,7 @@ export function SortableList({
           <li
             key={item}
             tabIndex={disabled ? -1 : 0}
-            aria-label={`${item}, position ${index + 1} of ${items.length}`}
+            aria-label={`${item}, posizione ${index + 1} di ${items.length}`}
             onPointerDown={(event) => start(index, event)}
             onPointerMove={move}
             onPointerUp={end}
@@ -218,7 +218,7 @@ export function SortableList({
               "glass relative flex items-center gap-3 py-1.5 pr-3 pl-2 outline-none tall:py-2 select-none focus-visible:ring-4 focus-visible:ring-blue-400/40",
               !disabled && "cursor-grab",
               dragged
-                ? "z-10 scale-[1.03] cursor-grabbing bg-white/95! shadow-[0_18px_36px_-16px_rgb(17_86_174/0.6)] transition-[scale,box-shadow]"
+                ? "z-10 scale-[1.03] cursor-grabbing bg-white/95! shadow-[0_18px_36px_-16px_rgb(25_100_126/0.6)] transition-[scale,box-shadow]"
                 : "transition-transform duration-200",
             )}
           >
@@ -250,7 +250,7 @@ export function ShowHide({ label, children }: { label: string; children: ReactNo
         onClick={() => setShown(!shown)}
         className="flex w-full items-center justify-center gap-1.5 rounded-full py-1.5 text-sm font-medium text-pn transition hover:bg-white/70 [&>svg]:size-4"
       >
-        {shown ? "Hide" : "Show"} {label}
+        {shown ? "Nascondi" : "Mostra"} {label}
         <Icon name="chevron-down" className={cx("transition-transform", shown && "rotate-180")} />
       </button>
       {shown && <div className="animate-pop-in">{children}</div>}
@@ -261,8 +261,8 @@ export function ShowHide({ label, children }: { label: string; children: ReactNo
 /** Tells audience members the name results will show for them, taken from their account. */
 export function ShownAs({ name }: { name: string }) {
   return (
-    <p className="truncate text-xs text-slate-500" title="The name on your PoliNetwork account">
-      Playing as <b className="font-semibold text-slate-800">{name}</b> · it can appear on the screen
+    <p className="truncate text-xs text-slate-500" title="Il nome che hai scelto">
+      Giochi come <b className="font-semibold text-slate-800">{name}</b> · può comparire sullo schermo
     </p>
   )
 }
@@ -273,7 +273,7 @@ export function useOneOf<T>(options: readonly T[]): T {
 }
 
 const tones = {
-  win: { card: "glass-tint", badge: "bg-pn text-white shadow-[0_0_0_8px_rgb(81_162_255/0.18)]" },
+  win: { card: "glass-tint", badge: "bg-pn text-white shadow-[0_0_0_8px_rgb(25_100_126/0.18)]" },
   lose: { card: "glass", badge: "bg-rose-600/10 text-rose-600" },
   info: { card: "glass", badge: "bg-white/80 text-sky-700 ring-[1.5px] ring-white" },
 }
@@ -333,9 +333,10 @@ export function Verdict({
                   ? "bg-pn text-white"
                   : "bg-white/70 text-slate-500 ring-[1.5px] ring-slate-300 ring-inset",
               )}
-              title={counts ? undefined : "This game does not count towards the leaderboard"}
+              title={counts ? undefined : "Questo gioco non conta per la classifica"}
             >
-              +{points.toLocaleString("en")} points{!counts && " · just for fun"}
+              +{points.toLocaleString("it")} {points === 1 ? "punto" : "punti"}
+              {!counts && " · solo per gioco"}
             </p>
           )}
         </div>
@@ -347,7 +348,7 @@ export function Verdict({
             onClick={() => setShown(true)}
             className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full py-1.5 text-sm font-medium text-pn transition hover:bg-white/70 [&>svg]:size-4"
           >
-            <Icon name="eye" /> Show the answer
+            <Icon name="eye" /> Mostra la risposta
           </button>
         ) : (
           <div className="animate-pop-in mt-3 text-sm text-pretty text-slate-600 [&_b]:text-slate-800">
@@ -358,7 +359,7 @@ export function Verdict({
                 onClick={() => setShown(false)}
                 className="ml-1.5 font-medium text-pn underline underline-offset-2"
               >
-                Hide
+                Nascondi
               </button>
             )}
           </div>
@@ -368,8 +369,8 @@ export function Verdict({
   )
 }
 
-// The palette of the slides: blues, sky, a touch of emerald and amber.
-const confettiColors = ["#1156ae", "#51a2ff", "#74d4ff", "#0069a8", "#00d492", "#ffb900", "#ffffff"]
+// The palette of the slides: Blue State, ivory and a darker gold that shows on the gold page.
+const confettiColors = ["#19647e", "#3f8ea6", "#84b9c8", "#fff6dc", "#ad8422", "#00d492", "#ffffff"]
 
 function Confetti() {
   const [pieces] = useState(() =>
@@ -450,11 +451,11 @@ export function Leaderboard({ board }: { board: LeaderboardView }) {
   return (
     <div className="glass animate-pop-in space-y-5 p-6 text-left">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="kicker">Leaderboard</h2>
+        <h2 className="kicker">Classifica</h2>
         <span className="truncate text-xs text-slate-500">{board.title}</span>
       </div>
       {board.top.length === 0 ? (
-        <p className="text-sm text-slate-600">No points yet: the first game is coming up.</p>
+        <p className="text-sm text-slate-600">Ancora nessun punto: il primo gioco sta per arrivare.</p>
       ) : (
         <ol className="divide-y-[1.5px] divide-white/85">
           {board.top.map((entry, index) => (
@@ -467,7 +468,7 @@ export function Leaderboard({ board }: { board: LeaderboardView }) {
               <Rank rank={entry.rank} />
               <span className="min-w-0 flex-1 truncate font-headline text-slate-800">{entry.name}</span>
               <span className="font-display text-lg font-medium text-pn tabular-nums">
-                {entry.points.toLocaleString("en")}
+                {entry.points.toLocaleString("it")}
               </span>
             </li>
           ))}
@@ -485,12 +486,13 @@ export function MyPlace({ board, className }: { board: LeaderboardView; classNam
     <p className={cx("text-center text-sm text-slate-600", className)}>
       {me ? (
         <>
-          You're <b className="font-semibold text-slate-800">#{me.rank}</b> of {players} with{" "}
-          <b className="font-display font-semibold text-pn tabular-nums">{me.points.toLocaleString("en")}</b>{" "}
-          points{me.rank === 1 && " 👑"}
+          Sei <b className="font-semibold text-slate-800">{me.rank}º</b> su {players} con{" "}
+          <b className="font-display font-semibold text-pn tabular-nums">{me.points.toLocaleString("it")}</b>{" "}
+          {me.points === 1 ? "punto" : "punti"}
+          {me.rank === 1 && " 👑"}
         </>
       ) : (
-        "Play the next game to get on the board."
+        "Partecipa al prossimo gioco per entrare in classifica."
       )}
     </p>
   )

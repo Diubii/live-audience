@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "../../validation.ts"
 import { defineActivity } from "../types.ts"
 
 const configSchema = z.object({ question: z.string().trim().min(1).max(300) })
@@ -15,11 +15,11 @@ export type PurchaseResults = {
 
 export const purchaseInterest = defineActivity<PurchaseConfig, PurchaseResponse, PurchaseResults>({
   type: "purchase-interest",
-  label: "Purchase interest",
+  label: "Interesse all'acquisto",
   description:
-    "Yes or no; people choosing yes enter a price in whole euros. Results group prices in €10 bands.",
+    "Sì o no; chi sceglie sì inserisce un prezzo in euro interi. I risultati raggruppano i prezzi in fasce da 10 €.",
   configSchema,
-  defaultConfig: () => ({ question: "Would you buy it? If yes, at what price?" }),
+  defaultConfig: () => ({ question: "Lo compreresti? Se sì, a quale prezzo?" }),
   responseSchema: () =>
     z.discriminatedUnion("buy", [
       z.object({ buy: z.literal(false) }),

@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  A minimal HTML presentation driven by PoliNetwork Live.
+  A minimal HTML presentation driven by Quiz Live.
 
   Open it as  demo-presentation.html?url=http://localhost:5173&key=<API key>
   (works straight from the file system). Arrow keys / space move between slides.
@@ -8,10 +8,10 @@
   Slides marked with data-live put that activity on stage when you reach them; a results slide
   marked data-live-status="closed" stops voting and shows the live chart.
 -->
-<html lang="en">
+<html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <title>Live demo</title>
+    <title>Demo dal vivo</title>
     <style>
       body { margin: 0; font-family: system-ui, sans-serif; background: #0b1b30; color: white; }
       section { display: none; height: 100vh; box-sizing: border-box; padding: 8vh 10vw; flex-direction: column; justify-content: center; }
@@ -28,26 +28,26 @@
   </head>
   <body>
     <section data-live="clear">
-      <h1>Welcome 👋</h1>
-      <p>Open the PoliNetwork Live page on your phone and sign in.</p>
+      <h1>Benvenuti 👋</h1>
+      <p>Apri Quiz Live sul telefono ed entra con il tuo nome.</p>
     </section>
 
     <section data-live="dinner-poll">
-      <h1>Vote now on your phone 📱</h1>
-      <p>The poll opened as soon as this slide appeared.</p>
+      <h1>Vota ora dal telefono 📱</h1>
+      <p>Il sondaggio si è aperto quando è comparsa questa slide.</p>
       <div class="bars" data-results="dinner-poll"></div>
     </section>
 
     <section data-live="dinner-poll" data-live-status="closed">
-      <h1>Results</h1>
+      <h1>Risultati</h1>
       <div class="bars" data-results="dinner-poll"></div>
     </section>
 
     <section data-live="clear">
-      <h1>Thanks!</h1>
+      <h1>Grazie!</h1>
     </section>
 
-    <div class="hint">← → to move</div>
+    <div class="hint">← → per cambiare slide</div>
 
     <script type="module">
       const params = new URLSearchParams(location.search)

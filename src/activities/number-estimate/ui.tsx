@@ -28,13 +28,13 @@ function Editor({
 }) {
   return (
     <div className="space-y-6">
-      <Field label="Prompt">
+      <Field label="Testo della domanda">
         <Textarea
           value={config.prompt}
           onChange={(event) => onChange({ ...config, prompt: event.target.value })}
         />
       </Field>
-      <Field label="Correct number (hidden from participants)">
+      <Field label="Numero corretto (nascosto ai partecipanti)">
         <Input
           type="number"
           min={0}
@@ -46,7 +46,7 @@ function Editor({
         />
       </Field>
       <p className="text-sm text-slate-500">
-        Closest guess wins. If several people are equally close, one winner is drawn at random among them.
+        Vince chi si avvicina di più. In caso di parità, il vincitore viene estratto a sorte tra i più vicini.
       </p>
     </div>
   )
@@ -92,7 +92,7 @@ function Audience({
       <Question>{config.prompt}</Question>
       {open && <ShownAs name={me.name} />}
       <label className={cx("block space-y-2.5", !open && "hidden")}>
-        <span className="block text-sm text-slate-500">Your guess, from 0 to 1000000</span>
+        <span className="block text-sm text-slate-500">La tua stima, da 0 a 1.000.000</span>
         <input
           type="number"
           min={0}
@@ -107,36 +107,37 @@ function Audience({
       </label>
       {open && (
         <SubmitButton disabled={!dirty || saving} onClick={() => void send()}>
-          {saving ? "Sending…" : response ? "Update guess" : "Submit guess"}
+          {saving ? "Invio…" : response ? "Aggiorna numero" : "Invia numero"}
         </SubmitButton>
       )}
       {open && (
         <Hint>
-          Closest guess wins. If several people are equally close, one winner is drawn at random among them.
+          Vince chi si avvicina di più. In caso di parità, il vincitore viene estratto a sorte tra i più
+          vicini.
         </Hint>
       )}
       {outcome ? (
         <EstimateVerdict {...outcome} mine={response?.number} />
       ) : !open ? (
         response ? (
-          <Verdict tone="info" icon="hourglass" title="Guesses locked">
-            You guessed <b>{format(response.number)}</b>. Waiting for the big reveal…
+          <Verdict tone="info" icon="hourglass" title="Numeri bloccati">
+            Hai scelto <b>{format(response.number)}</b>. In attesa della rivelazione…
           </Verdict>
         ) : (
-          <Verdict tone="info" icon="lock" title="Guesses are closed">
-            No guess from you this time.
+          <Verdict tone="info" icon="lock" title="Invio dei numeri chiuso">
+            Questa volta non hai inviato un numero.
           </Verdict>
         )
       ) : response && !dirty ? (
-        <Saved id={response}>Guess saved. You can change it until the reveal.</Saved>
+        <Saved id={response}>Numero salvato. Puoi cambiarlo fino alla rivelazione.</Saved>
       ) : (
-        <Hint className="text-center">One guess per person.</Hint>
+        <Hint className="text-center">Un numero a persona.</Hint>
       )}
     </div>
   )
 }
 
-const format = (number: number) => number.toLocaleString("en")
+const format = (number: number) => number.toLocaleString("it-IT")
 
 function EstimateVerdict({
   draw,
@@ -149,23 +150,23 @@ function EstimateVerdict({
   points: number | null
   mine: number | undefined
 }) {
-  const cheer = useOneOf(["You won!", "Best guess in the room!", "Human calculator!"])
+  const cheer = useOneOf(["Hai vinto!", "La migliore stima della sala!", "Calcolatrice umana!"])
   const real = <b>{format(draw.number)}</b>
   const winner = draw.winner
   if (youWon) {
     return draw.distance === 0 ? (
-      <Verdict solution points={points} tone="win" icon="target" title="Spot on!">
-        The real number was exactly {real}. You win!
+      <Verdict solution points={points} tone="win" icon="target" title="Esatto!">
+        Il numero vero era proprio {real}. Hai vinto!
       </Verdict>
     ) : (
       <Verdict solution points={points} tone="win" icon="trophy" title={cheer}>
-        The real number was {real}: your {format(mine ?? 0)} was the closest guess.
+        Il numero vero era {real}: il tuo {format(mine ?? 0)} era il più vicino.
       </Verdict>
     )
   }
   const winnerLine = winner
-    ? `${winner.name} wins with ${format(winner.number)}.`
-    : "Nobody guessed this time."
+    ? `${winner.name} vince con ${format(winner.number)}.`
+    : "Questa volta nessuno ha risposto."
   if (mine === undefined) {
     return (
       <Verdict
@@ -173,7 +174,7 @@ function EstimateVerdict({
         points={points}
         tone="info"
         icon="target"
-        title={`The real number was ${format(draw.number)}`}
+        title={`Il numero vero era ${format(draw.number)}`}
       >
         {winnerLine}
       </Verdict>
@@ -182,22 +183,23 @@ function EstimateVerdict({
   const off = Math.abs(mine - draw.number)
   if (off === draw.distance) {
     return (
-      <Verdict solution points={points} tone="lose" icon="shuffle" title="So close!">
-        You tied for the closest guess with {draw.tied - 1 === 1 ? "someone else" : `${draw.tied - 1} others`}
-        , but the random draw picked {winner?.name}.
+      <Verdict solution points={points} tone="lose" icon="shuffle" title="Per un soffio!">
+        Eri tra i più vicini insieme a{" "}
+        {draw.tied - 1 === 1 ? "un'altra persona" : `altre ${draw.tied - 1} persone`}, ma il sorteggio ha
+        scelto {winner?.name}.
       </Verdict>
     )
   }
   const ratio = off / Math.max(draw.number, 1)
   const [icon, title] =
     ratio <= 0.1
-      ? (["target", "Argh, so close!"] as const)
+      ? (["target", "Ah, per un soffio!"] as const)
       : ratio <= 0.5
-        ? (["target", "Not bad!"] as const)
-        : (["circle-x", "Way off!"] as const)
+        ? (["target", "Niente male!"] as const)
+        : (["circle-x", "Acqua, acqua!"] as const)
   return (
     <Verdict solution points={points} tone="lose" icon={icon} title={title}>
-      The real number was {real}, you guessed {format(mine)}. {winnerLine}
+      Il numero vero era {real}, tu hai scelto {format(mine)}. {winnerLine}
     </Verdict>
   )
 }
@@ -205,7 +207,7 @@ function EstimateVerdict({
 function Results({ results }: { config: NumberEstimateConfig; results: NumberEstimateResults }) {
   return (
     <div className="space-y-4 text-sm text-slate-700">
-      <p className="text-slate-500">{results.totalParticipants} participants</p>
+      <p className="text-slate-500">{results.totalParticipants} partecipanti</p>
       {results.draw && (
         <>
           <p className="font-display text-5xl font-medium tracking-tight text-pn tabular-nums">
@@ -213,11 +215,11 @@ function Results({ results }: { config: NumberEstimateConfig; results: NumberEst
           </p>
           <p>
             {results.draw.winner
-              ? `Winner: ${results.draw.winner.name} (${results.draw.winner.number}), distance ${results.draw.distance}`
-              : "No participants: no winner."}
+              ? `Vincitore: ${results.draw.winner.name} (${results.draw.winner.number}), distanza ${results.draw.distance}`
+              : "Nessun partecipante: nessun vincitore."}
           </p>
           {results.draw.tied > 1 && (
-            <p>Winner drawn randomly among {results.draw.tied} equally close guesses.</p>
+            <p>Vincitore estratto a sorte tra {results.draw.tied} numeri alla stessa distanza.</p>
           )}
         </>
       )}

@@ -15,7 +15,7 @@ function setup() {
     store,
     session: async (c, next) => {
       const id = c.req.header("x-test-user")
-      c.set("user", id ? { id, name: id, canParticipate: true, isAdmin: false } : null)
+      c.set("user", id ? { id, name: id, isAdmin: false } : null)
       await next()
     },
   })
@@ -23,7 +23,7 @@ function setup() {
     app.request("/api/audience/respond", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-test-user": id },
-      // Old clients typed a name: it must be ignored in favour of the IdP one.
+      // Old clients typed a name with each answer: it must be ignored in favour of the sign-in one.
       body: JSON.stringify({ activityId: activity.id, response: { name: "Typed name", answer: text } }),
     })
   return { db, store, activity, app, answer }
@@ -87,10 +87,10 @@ describe("memory quiz", () => {
       expect(await outcome("Ada")).toMatchObject({ youWon: false, draw: { winner: { name: "Sara" } } })
       expect(JSON.stringify(results)).not.toContain("userId")
       expect(new Store(db).drawActivity(activity.id)).toEqual(results)
-      expect(() => store.setStageStatus("open")).toThrow("Reset this quiz")
+      expect(() => store.setStageStatus("open")).toThrow("Azzera questo quiz")
       expect(() =>
         store.updateActivity(activity.id, { config: { ...config, question: "Changed?" } }),
-      ).toThrow("Reset this quiz before editing")
+      ).toThrow("Azzera questo quiz prima di modificarne")
       // Saving the toggles sends the same config along: that is not an edit.
       expect(
         store.updateActivity(activity.id, { config, countsToLeaderboard: false }).countsToLeaderboard,
@@ -113,7 +113,7 @@ describe("memory quiz", () => {
     try {
       const store = new Store(db)
       const activity = store.createActivity({ type: "memory-quiz", title: "Draft", slug: "draft" })
-      expect(() => store.setStage(activity.id, "open")).toThrow("Save a valid quiz")
+      expect(() => store.setStage(activity.id, "open")).toThrow("Salva un quiz valido")
       expect(store.getStage().activityId).toBeNull()
       store.updateActivity(activity.id, { config })
       expect(store.setStage(activity.id, "open").status).toBe("open")

@@ -76,7 +76,7 @@ describe("purchase interest", () => {
       const app = createApp({
         store,
         session: async (c, next) => {
-          c.set("user", { ...user, isAdmin: false, canParticipate: true })
+          c.set("user", { ...user, isAdmin: false })
           await next()
         },
       })

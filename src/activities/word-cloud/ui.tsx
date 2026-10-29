@@ -19,16 +19,16 @@ function Editor({
 }) {
   return (
     <div className="space-y-6">
-      <Field label="Prompt">
+      <Field label="Testo della domanda">
         <Textarea
           value={config.prompt}
           onChange={(e) => onChange({ ...config, prompt: e.target.value })}
-          placeholder="What gadgets should we make?"
+          placeholder="Quali gadget dovremmo realizzare?"
         />
       </Field>
       <Field
-        label="Words or phrases per person"
-        hint="Each line is one entry, up to 60 characters. Repeating it counts once per person."
+        label="Parole o frasi per persona"
+        hint="Una voce per riga, fino a 60 caratteri. Le ripetizioni contano una sola volta per persona."
       >
         <Input
           type="number"
@@ -79,7 +79,7 @@ function Audience({
     <div className="space-y-3 tall:space-y-4">
       <Question>{config.prompt}</Question>
       <label className="block space-y-2.5">
-        <Hint>Up to {config.maxWords} words or short phrases, one per line (60 characters each).</Hint>
+        <Hint>Fino a {config.maxWords} parole o brevi frasi, una per riga (60 caratteri ciascuna).</Hint>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -91,28 +91,28 @@ function Audience({
       </label>
       {open && (
         <SubmitButton disabled={!parsed.success || !dirty || saving} onClick={() => void send()}>
-          {saving ? "Sending…" : response ? "Update answer" : "Send"}
+          {saving ? "Invio…" : response ? "Aggiorna risposta" : "Invia"}
         </SubmitButton>
       )}
       {open && entries.length > 0 && !parsed.success && (
         <p className="text-sm text-amber-700">
-          Use up to {config.maxWords} lines, with at most 60 characters per entry.
+          Usa fino a {config.maxWords} righe, con al massimo 60 caratteri per voce.
         </p>
       )}
       {!open ? (
         response ? (
-          <Verdict tone="info" icon="cloud" title="Your words are in the cloud">
-            Can you spot them on the screen?
+          <Verdict tone="info" icon="cloud" title="Le tue parole sono nella nuvola">
+            Riesci a trovarle sullo schermo?
           </Verdict>
         ) : (
-          <Verdict tone="info" icon="lock" title="Answers are closed">
-            No words from you this time.
+          <Verdict tone="info" icon="lock" title="Le risposte sono chiuse">
+            Questa volta non hai inviato parole.
           </Verdict>
         )
       ) : response && !dirty ? (
-        <Saved id={response}>Answer saved. You can change it until answers close.</Saved>
+        <Saved id={response}>Risposta salvata. Puoi cambiarla finché le risposte sono aperte.</Saved>
       ) : (
-        <Hint className="text-center">The more people repeat a word, the larger it appears.</Hint>
+        <Hint className="text-center">Più persone ripetono una parola, più grande appare.</Hint>
       )}
     </div>
   )
@@ -124,15 +124,15 @@ function Results({ results }: { config: WordCloudConfig; results: WordCloudResul
     <div className="space-y-4">
       <section
         className="flex min-h-32 flex-wrap items-center justify-center gap-x-3 gap-y-2"
-        aria-label="Word cloud"
+        aria-label="Nuvola di parole"
       >
         {results.words.length === 0 ? (
-          <p className="text-sm text-slate-500">Waiting for answers…</p>
+          <p className="text-sm text-slate-500">In attesa delle risposte…</p>
         ) : (
           results.words.map(({ text, count }) => (
             <span
               key={text}
-              title={`${count} respondents`}
+              title={`${count} risposte`}
               className={cx(
                 "max-w-full font-display font-medium tracking-tight break-words transition-all",
                 count / max > 0.66 ? "text-pn" : count / max > 0.33 ? "text-sky-700" : "text-blue-400",
@@ -140,12 +140,12 @@ function Results({ results }: { config: WordCloudConfig; results: WordCloudResul
               style={{ fontSize: `${14 + 34 * (count / max)}px`, lineHeight: 1.2 }}
             >
               {text}
-              <span className="sr-only">: {count} respondents</span>
+              <span className="sr-only">: {count} risposte</span>
             </span>
           ))
         )}
       </section>
-      <p className="text-xs text-slate-500">{results.totalRespondents} respondents</p>
+      <p className="text-xs text-slate-500">{results.totalRespondents} risposte</p>
     </div>
   )
 }

@@ -29,15 +29,15 @@ function Editor({ config, onChange }: { config: PollConfig; onChange: (config: P
 
   return (
     <div className="space-y-6">
-      <Field label="Question">
+      <Field label="Domanda">
         <Textarea
           value={config.question}
           onChange={(e) => onChange({ ...config, question: e.target.value })}
-          placeholder="What should we order for dinner?"
+          placeholder="Cosa ordiniamo per cena?"
         />
       </Field>
       <div className="space-y-3">
-        <span className="label-caps block">Options</span>
+        <span className="label-caps block">Opzioni</span>
         {config.options.map((option, index) => (
           <div key={option.id} className="flex items-center gap-2">
             <span className="w-6 shrink-0 text-right font-display text-sm text-slate-400 tabular-nums">
@@ -46,16 +46,16 @@ function Editor({ config, onChange }: { config: PollConfig; onChange: (config: P
             <Input
               value={option.label}
               onChange={(e) => setOption(index, e.target.value)}
-              placeholder={`Option ${index + 1}`}
+              placeholder={`Opzione ${index + 1}`}
             />
-            <Button variant="ghost" disabled={index === 0} onClick={() => move(index, -1)} title="Move up">
+            <Button variant="ghost" disabled={index === 0} onClick={() => move(index, -1)} title="Sposta su">
               <Icon name="arrow-up" />
             </Button>
             <Button
               variant="ghost"
               disabled={index === config.options.length - 1}
               onClick={() => move(index, 1)}
-              title="Move down"
+              title="Sposta giù"
             >
               <Icon name="arrow-down" />
             </Button>
@@ -63,7 +63,7 @@ function Editor({ config, onChange }: { config: PollConfig; onChange: (config: P
               variant="ghost"
               disabled={config.options.length <= 2}
               onClick={() => remove(index)}
-              title="Remove"
+              title="Rimuovi"
             >
               <Icon name="x" />
             </Button>
@@ -73,10 +73,10 @@ function Editor({ config, onChange }: { config: PollConfig; onChange: (config: P
           disabled={config.options.length >= 12}
           onClick={() => onChange({ ...config, options: [...config.options, { id: shortId(), label: "" }] })}
         >
-          <Icon name="plus" /> Add option
+          <Icon name="plus" /> Aggiungi opzione
         </Button>
       </div>
-      <Field label="Choices per person" hint="1 for a classic poll, more to let people pick several options.">
+      <Field label="Scelte per persona" hint="1 per un sondaggio classico, di più per consentire più scelte.">
         <Input
           type="number"
           min={1}
@@ -102,7 +102,7 @@ function Audience({
   submit: (response: PollResponse) => Promise<void>
 }) {
   const single = config.maxChoices === 1
-  const counted = useOneOf(["Your vote is in!", "Vote counted!", "Democracy thanks you!"])
+  const counted = useOneOf(["Il tuo voto è arrivato!", "Voto registrato!", "La democrazia ti ringrazia!"])
   const [selected, setSelected] = useState<string[]>(response?.choices ?? [])
   const [saving, setSaving] = useState(false)
   const saved = response?.choices ?? []
@@ -143,7 +143,7 @@ function Audience({
       <Question>{config.question}</Question>
       {!single && open && (
         <Hint>
-          Pick up to {config.maxChoices}{" "}
+          Scegli fino a {config.maxChoices} opzioni{" "}
           <span className="font-display font-medium text-sky-700 tabular-nums">
             ({selected.length}/{config.maxChoices})
           </span>
@@ -169,23 +169,23 @@ function Audience({
           disabled={!dirty || selected.length === 0 || saving}
           onClick={() => void send(selected)}
         >
-          {saving ? "Sending…" : saved.length ? "Update vote" : "Vote"}
+          {saving ? "Invio…" : saved.length ? "Aggiorna voto" : "Vota"}
         </SubmitButton>
       )}
       {!open ? (
         saved.length ? (
           <Verdict tone="info" icon="eye" title={counted}>
-            Eyes on the screen for the results.
+            Guarda lo schermo per i risultati.
           </Verdict>
         ) : (
-          <Verdict tone="info" icon="hourglass" title="You missed this one">
-            Voting is closed. Be quicker next time!
+          <Verdict tone="info" icon="hourglass" title="Questa te la sei persa">
+            Le votazioni sono chiuse. La prossima volta fai prima!
           </Verdict>
         )
       ) : saved.length && !dirty ? (
-        <Saved id={saved}>Vote saved. You can change it until the poll closes.</Saved>
+        <Saved id={saved}>Voto salvato. Puoi cambiarlo finché il sondaggio è aperto.</Saved>
       ) : (
-        single && <Hint className="text-center">Tap an option to vote.</Hint>
+        single && <Hint className="text-center">Tocca un'opzione per votare.</Hint>
       )}
     </div>
   )
@@ -206,7 +206,7 @@ function Results({ results }: { config: PollConfig; results: PollResults }) {
           <Bar value={o.votes} max={max} />
         </div>
       ))}
-      <p className="text-xs text-slate-500">{results.totalVoters} voters</p>
+      <p className="text-xs text-slate-500">{results.totalVoters} votanti</p>
     </div>
   )
 }

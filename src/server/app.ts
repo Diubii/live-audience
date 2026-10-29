@@ -2,8 +2,8 @@ import { timingSafeEqual } from "node:crypto"
 import { Hono, type MiddlewareHandler } from "hono"
 import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
-import { z } from "zod"
 import { activityDefinitions } from "../activities/registry.ts"
+import { z } from "../validation.ts"
 import type { AuthVariables, SessionUser } from "./auth.ts"
 import { sse, throttleByKey } from "./sse.ts"
 import { type Stage, type Store, StoreError } from "./store.ts"
@@ -20,13 +20,11 @@ const createActivityBody = z.object({
   title: z.string().trim().min(1).max(200),
   slug: z.string().trim().min(1).max(80),
   presentationId: z.string().nullable().optional(),
-  membersOnly: z.boolean().optional(),
   countsToLeaderboard: z.boolean().optional(),
 })
 const updateActivityBody = z.object({
   type: z.string().optional(),
   presentationId: z.string().nullable().optional(),
-  membersOnly: z.boolean().optional(),
   countsToLeaderboard: z.boolean().optional(),
   title: z.string().trim().min(1).max(200).optional(),
   slug: z.string().trim().min(1).max(80).optional(),
@@ -41,7 +39,7 @@ const respondBody = z.object({ activityId: z.string(), response: z.unknown() })
 async function parseBody<T>(c: { req: { json: () => Promise<unknown> } }, schema: z.ZodType<T>): Promise<T> {
   const body = await c.req.json().catch(() => ({}))
   const parsed = schema.safeParse(body)
-  if (!parsed.success) throw new StoreError(400, "Invalid request body", parsed.error.issues)
+  if (!parsed.success) throw new StoreError(400, "Corpo della richiesta non valido", parsed.error.issues)
   return parsed.data
 }
 
@@ -53,7 +51,7 @@ export function createApp({ store, session }: { store: Store; session: Middlewar
       return c.json({ error: error.message, details: error.details }, error.status)
     if (error instanceof HTTPException) return c.json({ error: error.message }, error.status)
     console.error(error)
-    return c.json({ error: "Internal error" }, 500)
+    return c.json({ error: "Errore interno" }, 500)
   })
 
   app.get("/healthz", (c) => c.text("ok"))
@@ -64,8 +62,8 @@ export function createApp({ store, session }: { store: Store; session: Middlewar
     (check: (user: SessionUser) => boolean): MiddlewareHandler<AppEnv> =>
     async (c, next) => {
       const user = c.get("user")
-      if (!user) throw new HTTPException(401, { message: "Sign in first" })
-      if (!check(user)) throw new HTTPException(403, { message: "You do not have access" })
+      if (!user) throw new HTTPException(401, { message: "Accedi prima di continuare" })
+      if (!check(user)) throw new HTTPException(403, { message: "Non hai accesso" })
       await next()
     }
 
@@ -79,7 +77,7 @@ export function createApp({ store, session }: { store: Store; session: Middlewar
       provided.length !== expected.length ||
       !timingSafeEqual(Buffer.from(provided), expected)
     ) {
-      throw new HTTPException(401, { message: "Missing or wrong API key" })
+      throw new HTTPException(401, { message: "Chiave API mancante o errata" })
     }
     await next()
   }
@@ -106,13 +104,12 @@ export function createApp({ store, session }: { store: Store; session: Middlewar
       return c.json(
         store
           .listActivities()
-          .map(({ id, slug, type, title, config, presentationId, membersOnly, countsToLeaderboard }) => ({
+          .map(({ id, slug, type, title, config, presentationId, countsToLeaderboard }) => ({
             id,
             slug,
             type,
             title,
             config,
-            membersOnly,
             countsToLeaderboard,
             presentation: presentationId ? (store.getPresentation(presentationId)?.slug ?? null) : null,
             answers: answers.get(id) ?? 0,
@@ -200,15 +197,13 @@ export function createApp({ store, session }: { store: Store; session: Middlewar
 
   app.get("/api/me", (c) => c.json({ user: c.get("user") }))
 
-  // Anyone with a PoliNetwork account may play; activities marked members only take Soci alone.
+  // Anyone signed in with a name may play.
   const audience = new Hono<AppEnv>()
     .use(requireUser(() => true))
     .get("/stage", (c) => c.json(audienceView(store, c.get("user") as SessionUser)))
     .post("/respond", async (c) => {
       const user = c.get("user") as SessionUser
       const body = await parseBody(c, respondBody)
-      if (store.getActivity(body.activityId)?.membersOnly && !isMember(user))
-        throw new HTTPException(403, { message: "This one is reserved to Soci" })
       const response = store.respond(body.activityId, user, body.response)
       // The new stage comes along, so a winning answer shows as won without waiting for the event.
       return c.json({ response, stage: audienceView(store, user) })
@@ -276,14 +271,9 @@ export function createApp({ store, session }: { store: Store; session: Middlewar
     .route("/", control)
   app.route("/api/admin", admin)
 
-  app.all("/api/*", (c) => c.json({ error: "Not found" }, 404))
+  app.all("/api/*", (c) => c.json({ error: "Non trovato" }, 404))
 
   return app
-}
-
-/** Soci, and admins, who can always take part. */
-function isMember(user: SessionUser) {
-  return user.canParticipate || user.isAdmin
 }
 
 /** The stage as presentations and the admin see it: ids resolved to slugs. */

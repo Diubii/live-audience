@@ -14,7 +14,6 @@ interface Activity {
   title: string
   config: unknown
   presentationId: string | null
-  membersOnly: boolean
   countsToLeaderboard: boolean
   updatedAt: number
 }
@@ -49,7 +48,6 @@ export function ActivityEditor({ id }: { id: string }) {
           slug: draft.slug,
           config: draft.config,
           presentationId: draft.presentationId,
-          membersOnly: draft.membersOnly,
           countsToLeaderboard: draft.countsToLeaderboard,
         },
       })
@@ -63,7 +61,7 @@ export function ActivityEditor({ id }: { id: string }) {
   }
 
   const remove = async () => {
-    if (!confirm(`Delete "${draft.title}" and all its answers?`)) return
+    if (!confirm(`Eliminare "${draft.title}" e tutte le sue risposte?`)) return
     await api(`/api/admin/activities/${id}`, { method: "DELETE" })
     navigate("/")
   }
@@ -71,7 +69,7 @@ export function ActivityEditor({ id }: { id: string }) {
   return (
     <div className="space-y-10">
       <PageHeader
-        kicker="Activities"
+        kicker="Attività"
         back="/"
         title={
           <span className="flex flex-wrap items-center gap-3">
@@ -88,7 +86,7 @@ export function ActivityEditor({ id }: { id: string }) {
       <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
         <Card className="space-y-6">
           <div className="grid gap-x-4 gap-y-5 sm:grid-cols-[minmax(0,12rem)_1fr_1fr]">
-            <Field label="Type">
+            <Field label="Tipo">
               <Select
                 value={draft.type}
                 onChange={(type) => {
@@ -106,58 +104,53 @@ export function ActivityEditor({ id }: { id: string }) {
                 ]}
               />
             </Field>
-            <Field label="Title (admin only)">
+            <Field label="Titolo (solo admin)">
               <Input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
             </Field>
-            <Field label="Slug" hint="Presentations refer to the activity by this. Changing it breaks them.">
+            <Field
+              label="Slug"
+              hint="Le presentazioni trovano l'attività con questo nome: se lo cambi smettono di trovarla."
+            >
               <Input value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} />
             </Field>
           </div>
-          <Field label="Presentation" hint="Points scored here count towards its leaderboard.">
+          <Field label="Presentazione" hint="I punti fatti qui contano per la sua classifica.">
             <PresentationSelect
               presentations={presentations.data ?? []}
               value={draft.presentationId ?? ""}
               onChange={(presentationId) => setDraft({ ...draft, presentationId: presentationId || null })}
             />
           </Field>
-          <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
-            <Toggle
-              label="Soci only"
-              hint="Off: anyone signed in with a PoliNetwork account can answer. On: only Soci."
-              checked={draft.membersOnly}
-              onChange={(membersOnly) => setDraft({ ...draft, membersOnly })}
-            />
-            <Toggle
-              label="Counts towards the leaderboard"
-              hint="Off: the game still scores and shows points on phones, but they stay off the leaderboard."
-              checked={draft.countsToLeaderboard}
-              onChange={(countsToLeaderboard) => setDraft({ ...draft, countsToLeaderboard })}
-            />
-          </div>
+          <Toggle
+            label="Conta per la classifica"
+            hint="Spento: il gioco assegna comunque i punti e li mostra sui telefoni, ma restano fuori dalla classifica."
+            checked={draft.countsToLeaderboard}
+            onChange={(countsToLeaderboard) => setDraft({ ...draft, countsToLeaderboard })}
+          />
           {draft.type !== saved.type && (
             <p className="rounded-xl bg-amber-400/15 px-3 py-2 text-sm text-amber-800">
-              Changing the type starts from fresh settings. It needs the activity off stage and without
-              answers.
+              Cambiando tipo si riparte da impostazioni nuove. L'attività deve essere fuori dal palco e senza
+              risposte.
             </p>
           )}
           <hr className="border-t-[1.5px] border-white" />
           {ui ? (
             <ui.Editor config={draft.config} onChange={(config) => setDraft({ ...draft, config })} />
           ) : (
-            <p className="text-sm text-rose-600">Unknown activity type "{draft.type}".</p>
+            <p className="text-sm text-rose-600">Tipo di attività sconosciuto "{draft.type}".</p>
           )}
           {error && <ErrorBox error={error} />}
           <div className="flex items-center gap-2.5 border-t-[1.5px] border-white pt-5">
             <Button variant="primary" disabled={!dirty || saving} onClick={() => void save()}>
-              {saving ? "Saving…" : "Save"}
+              {saving ? "Salvataggio…" : "Salva"}
             </Button>
             {dirty && (
               <Button variant="ghost" onClick={() => setDraft(loaded.data ?? null)}>
-                Discard changes
+                Annulla le modifiche
               </Button>
             )}
             <Button variant="danger" className="ml-auto" onClick={() => void remove()}>
-              <Icon name="trash" /> Delete
+              <Icon name="trash" /> Elimina
             </Button>
           </div>
         </Card>
@@ -185,18 +178,20 @@ function StageButtons({ activityId }: { activityId: string }) {
   if (onStage) {
     return (
       <>
-        <Tag tone={stage?.status === "open" ? "live" : "warn"}>on stage · {stage?.status}</Tag>
+        <Tag tone={stage?.status === "open" ? "live" : "warn"}>
+          sul palco · {stage?.status === "open" ? "aperta" : "chiusa"}
+        </Tag>
         {stage?.status === "open" ? (
           <Button onClick={() => void controlStage("close")}>
-            <Icon name="lock" /> Close answers
+            <Icon name="lock" /> Chiudi le risposte
           </Button>
         ) : (
           <Button variant="success" onClick={() => void controlStage("open")}>
-            <Icon name="play" /> Open answers
+            <Icon name="play" /> Apri le risposte
           </Button>
         )}
         <Button variant="ghost" onClick={() => void controlStage("clear")}>
-          Take off stage
+          Togli dal palco
         </Button>
       </>
     )
@@ -204,10 +199,10 @@ function StageButtons({ activityId }: { activityId: string }) {
   return (
     <>
       <Button onClick={() => void controlStage({ activity: activityId, status: "closed" })}>
-        Show (closed)
+        Mostra (chiusa)
       </Button>
       <Button variant="success" onClick={() => void controlStage({ activity: activityId, status: "open" })}>
-        <Icon name="play" /> Put on stage & open
+        <Icon name="play" /> Metti sul palco e apri
       </Button>
     </>
   )
@@ -238,9 +233,9 @@ function ResultsPanel({ activity }: { activity: Activity }) {
   return (
     <Card className="space-y-5 self-start">
       <div className="flex items-center justify-between">
-        <h2 className="kicker">Live results</h2>
+        <h2 className="kicker">Risultati in diretta</h2>
         <Button variant="ghost" onClick={() => void reset()}>
-          <Icon name="rotate-ccw" /> Reset answers
+          <Icon name="rotate-ccw" /> Azzera le risposte
         </Button>
       </div>
       {drawLabel && !decided && (

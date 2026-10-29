@@ -7,7 +7,7 @@ slide. Sei slide aggiuntive sono distribuite in entrambe le versioni, conservand
 l'ordine e i contenuti delle slide esistenti.
 
 1. Vero/falso: le passkey richiedono una password ogni volta? Falso.
-2. Intruso: IdentityProvider / Aule PoliNetwork / TicketBuddy / CampusChef. CampusChef
+2. Intruso: IdentityProvider / Aule / TicketBuddy / CampusChef. CampusChef
    è l'unico progetto inventato; gli altri sono già comparsi prima della domanda.
 3. Team lead misterioso: `lead-hr.png`, foto di Matteo Zenti già mostrata
    nella slide dei team, progressivamente meno sfocata. Risposte accettate: Matteo

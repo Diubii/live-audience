@@ -1,29 +1,34 @@
-# Number lottery
+# Lotteria dei numeri
 
-Participants sign in, submit one integer from 0 to 100 under their account name, and may
-replace their guess until the presenter draws. Closest absolute distance wins.
-Equal distances trigger a random draw of one winner among the tied entries, explicitly
-announced on the participant page and presentation before the winner is revealed.
-Same names or guesses are separate chances when submitted by different accounts.
+I partecipanti accedono, inviano un intero da 0 a 100 con il nome scelto all’accesso e
+possono cambiarlo fino all’estrazione del relatore. Vince la distanza assoluta minore.
+In caso di parità si estrae un solo vincitore a sorte tra i più vicini: la regola è
+annunciata sulla pagina del pubblico e nella presentazione prima della rivelazione.
+Nomi o numeri uguali sono possibilità separate se inviati da account distinti.
 
-The `number-lottery` activity uses existing validation, response storage and registries.
-The API-key/admin endpoint `POST /activities/:slug/draw` generates a uniform integer
-with Node `randomInt(0, 101)` and randomly selects one closest entry. It accepts no
-caller-supplied target. Closing the stage and persisting the outcome in SQLite settings
-are one transaction. Repeated requests return the stored outcome, including after restart.
-Reopening is refused until the existing reset endpoint deletes responses and the outcome.
-Deleting an activity also deletes its saved outcome. No migration or dependency is needed.
-Account names and guesses are presentation data; account identifiers remain private.
+L’attività `number-lottery` usa validazione, salvataggio delle risposte e registri esistenti.
+L’endpoint amministratore/con chiave API `POST /activities/:slug/draw` genera un intero
+uniforme con `randomInt(0, 101)` di Node ed estrae a sorte una delle risposte più vicine.
+Non accetta un numero da indovinare fornito dal chiamante. Chiusura del palco e
+salvataggio dell’esito nelle impostazioni SQLite avvengono in un’unica transazione.
+Le richieste successive restituiscono l’esito salvato, anche dopo un riavvio.
+La riapertura viene rifiutata finché l’endpoint di azzeramento non cancella risposte
+ed esito. Eliminare l’attività elimina anche l’esito. Non servono migrazioni o dipendenze.
+Nomi d’accesso e numeri sono dati per la presentazione; gli identificativi restano privati.
 
-Results are `{ prompt, totalParticipants, entries: [{ name, number }], draw }`, where draw
-is null before extraction or `{ number, distance, closest, winners, drawnAt }` afterward.
-The existing SSE results feed carries that outcome. Presentation animation is decorative:
-it reveals the saved server result, never generates a second outcome. Reload restores it.
+I risultati sono `{ prompt, totalParticipants, entries: [{ name, number }], draw }`,
+con draw null prima dell’estrazione oppure `{ number, distance, closest, winners, drawnAt }`
+dopo. Il flusso SSE dei risultati trasmette l’esito. L’animazione della presentazione
+è decorativa: rivela il risultato salvato dal server, senza generarne un secondo.
+Ricaricando la pagina si ripristina lo stesso esito.
 
-Implementation and checks:
-1. Definition/UI, persisted draw endpoint, reopening/reset/delete lifecycle; verify integer
-   boundaries, closest distance, ties, permissions, late changes and draw idempotence.
-2. Add a gadget lottery slide to both assembly decks, including the tie announcement and
-   a lottery-ball animation. Preserve the existing wheel and other slide content.
-3. Verify browser entry/draw/reload/tie flows, both deck layouts, and the app's required
-   `pnpm typecheck && pnpm check && pnpm test`, followed by a build.
+Implementazione e verifiche:
+
+1. Definizione/UI, endpoint di estrazione persistente, riapertura/azzeramento/eliminazione;
+   verificare limiti interi, distanza minima, parità, permessi, modifiche tardive e idempotenza.
+2. Aggiungere una slide di lotteria dei gadget a entrambe le presentazioni dell’assemblea,
+   con annuncio della regola sui pari merito e animazione delle palline. Conservare ruota
+   e altri contenuti esistenti.
+3. Verificare nel browser partecipazione/estrazione/ricaricamento/parità, il layout delle
+   due presentazioni e i controlli obbligatori `pnpm typecheck && pnpm check && pnpm test`,
+   seguiti dalla compilazione.

@@ -33,8 +33,6 @@ export interface Activity {
   config: unknown
   /** The presentation it belongs to, whose leaderboard its points count towards. */
   presentationId: string | null
-  /** Only Soci (and admins) may answer. Otherwise anyone signed in with a PoliNetwork account may. */
-  membersOnly: boolean
   /** Whether its points add up to the presentation's leaderboard. */
   countsToLeaderboard: boolean
   createdAt: number
@@ -85,7 +83,6 @@ export interface AudienceStage {
     id: string
     type: string
     config: unknown
-    membersOnly: boolean
     countsToLeaderboard: boolean
   } | null
 }
@@ -131,7 +128,6 @@ interface ActivityRow {
   title: string
   config: string
   presentation_id: string | null
-  members_only: number
   counts_to_leaderboard: number
   created_at: number
   updated_at: number
@@ -192,7 +188,7 @@ export class Store {
 
   requireActivity(idOrSlug: string): Activity {
     const activity = this.getActivity(idOrSlug)
-    if (!activity) throw new StoreError(404, `No activity "${idOrSlug}"`)
+    if (!activity) throw new StoreError(404, `Nessuna attività "${idOrSlug}"`)
     return activity
   }
 
@@ -201,11 +197,10 @@ export class Store {
     title: string
     slug: string
     presentationId?: string | null
-    membersOnly?: boolean
     countsToLeaderboard?: boolean
   }): Activity {
     const definition = getActivityDefinition(input.type)
-    if (!definition) throw new StoreError(400, `Unknown activity type "${input.type}"`)
+    if (!definition) throw new StoreError(400, `Tipo di attività sconosciuto "${input.type}"`)
     this.assertSlugFree(input.slug)
     const now = Date.now()
     const activity: Activity = {
@@ -215,14 +210,13 @@ export class Store {
       title: input.title,
       config: definition.defaultConfig(),
       presentationId: input.presentationId ? this.requirePresentation(input.presentationId).id : null,
-      membersOnly: input.membersOnly ?? false,
       countsToLeaderboard: input.countsToLeaderboard ?? true,
       createdAt: now,
       updatedAt: now,
     }
     this.db
       .prepare(
-        "INSERT INTO activities (id, slug, type, title, config, presentation_id, members_only, counts_to_leaderboard, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO activities (id, slug, type, title, config, presentation_id, counts_to_leaderboard, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       )
       .run(
         activity.id,
@@ -231,7 +225,6 @@ export class Store {
         activity.title,
         JSON.stringify(activity.config),
         activity.presentationId,
-        activity.membersOnly ? 1 : 0,
         activity.countsToLeaderboard ? 1 : 0,
         now,
         now,
@@ -247,14 +240,13 @@ export class Store {
       slug?: string
       config?: unknown
       presentationId?: string | null
-      membersOnly?: boolean
       countsToLeaderboard?: boolean
     },
   ): Activity {
     const activity = this.requireActivity(id)
     const typeChanged = patch.type !== undefined && patch.type !== activity.type
     if (typeChanged && this.getStage().activityId === activity.id) {
-      throw new StoreError(409, "Take this activity off stage before changing its type")
+      throw new StoreError(409, "Togli questa attività dal palco prima di cambiarne il tipo")
     }
     // Answers and draws of the old type would not fit the new one.
     if (
@@ -263,29 +255,32 @@ export class Store {
         this.getSetting(`number-draw:${activity.id}`) ||
         this.getSetting(`quiz-draw:${activity.id}`))
     ) {
-      throw new StoreError(409, "Reset the answers before changing the activity type")
+      throw new StoreError(409, "Azzera le risposte prima di cambiare il tipo di attività")
     }
     // The admin page sends the config along with every save, e.g. of the toggles: only edits count.
     const configChanged =
       patch.config !== undefined && JSON.stringify(patch.config) !== JSON.stringify(activity.config)
     if (configChanged && activity.type === memoryQuiz.type && this.getSetting(`quiz-draw:${activity.id}`)) {
-      throw new StoreError(409, "Reset this quiz before editing its question or answers")
+      throw new StoreError(409, "Azzera questo quiz prima di modificarne la domanda o le risposte")
     }
     if (
       configChanged &&
       activity.type === numberEstimate.type &&
       (this.listResponses(activity.id).length || this.getSetting(`number-draw:${activity.id}`))
     ) {
-      throw new StoreError(409, "Reset this estimate before editing its question or target")
+      throw new StoreError(
+        409,
+        "Azzera questa stima prima di modificarne la domanda o il numero da indovinare",
+      )
     }
     const type = patch.type ?? activity.type
     const definition = getActivityDefinition(type)
-    if (!definition) throw new StoreError(400, `Unknown activity type "${type}"`)
+    if (!definition) throw new StoreError(400, `Tipo di attività sconosciuto "${type}"`)
     // Without a config, a new type starts from its default one.
     let config = typeChanged ? definition.defaultConfig() : activity.config
     if (patch.config !== undefined) {
       const parsed = definition.configSchema.safeParse(patch.config)
-      if (!parsed.success) throw new StoreError(400, "Invalid configuration", parsed.error.issues)
+      if (!parsed.success) throw new StoreError(400, "Configurazione non valida", parsed.error.issues)
       config = parsed.data
     }
     if (patch.slug !== undefined && patch.slug !== activity.slug) this.assertSlugFree(patch.slug)
@@ -300,13 +295,12 @@ export class Store {
       slug: patch.slug ?? activity.slug,
       config,
       presentationId,
-      membersOnly: patch.membersOnly ?? activity.membersOnly,
       countsToLeaderboard: patch.countsToLeaderboard ?? activity.countsToLeaderboard,
       updatedAt: Date.now(),
     }
     this.db
       .prepare(
-        "UPDATE activities SET type = ?, title = ?, slug = ?, config = ?, presentation_id = ?, members_only = ?, counts_to_leaderboard = ?, updated_at = ? WHERE id = ?",
+        "UPDATE activities SET type = ?, title = ?, slug = ?, config = ?, presentation_id = ?, counts_to_leaderboard = ?, updated_at = ? WHERE id = ?",
       )
       .run(
         updated.type,
@@ -314,7 +308,6 @@ export class Store {
         updated.slug,
         JSON.stringify(updated.config),
         updated.presentationId,
-        updated.membersOnly ? 1 : 0,
         updated.countsToLeaderboard ? 1 : 0,
         updated.updatedAt,
         updated.id,
@@ -346,8 +339,9 @@ export class Store {
   }
 
   private assertSlugFree(slug: string) {
-    if (!SLUG_PATTERN.test(slug)) throw new StoreError(400, "Slugs use lowercase letters, digits and dashes")
-    if (this.getActivity(slug)) throw new StoreError(409, `The slug "${slug}" is already taken`)
+    if (!SLUG_PATTERN.test(slug))
+      throw new StoreError(400, "Gli slug possono contenere lettere minuscole, cifre e trattini")
+    if (this.getActivity(slug)) throw new StoreError(409, `Lo slug "${slug}" è già in uso`)
   }
 
   // ---- presentations -------------------------------------------------------------------------
@@ -366,7 +360,7 @@ export class Store {
 
   requirePresentation(idOrSlug: string): Presentation {
     const presentation = this.getPresentation(idOrSlug)
-    if (!presentation) throw new StoreError(404, `No presentation "${idOrSlug}"`)
+    if (!presentation) throw new StoreError(404, `Nessuna presentazione "${idOrSlug}"`)
     return presentation
   }
 
@@ -412,8 +406,9 @@ export class Store {
   }
 
   private assertPresentationSlugFree(slug: string) {
-    if (!SLUG_PATTERN.test(slug)) throw new StoreError(400, "Slugs use lowercase letters, digits and dashes")
-    if (this.getPresentation(slug)) throw new StoreError(409, `The slug "${slug}" is already taken`)
+    if (!SLUG_PATTERN.test(slug))
+      throw new StoreError(400, "Gli slug possono contenere lettere minuscole, cifre e trattini")
+    if (this.getPresentation(slug)) throw new StoreError(409, `Lo slug "${slug}" è già in uso`)
   }
 
   // ---- points ----------------------------------------------------------------------------
@@ -436,7 +431,7 @@ export class Store {
     })
   }
 
-  /** The leaderboard presentations show. Names come from the IdP; account ids stay private. */
+  /** The leaderboard presentations show. Names are the sign-in ones; ids stay private. */
   getLeaderboard(idOrSlug: string) {
     const presentation = this.requirePresentation(idOrSlug)
     return {
@@ -522,14 +517,14 @@ export class Store {
   respond(activityId: string, user: { id: string; name: string }, response: unknown): unknown {
     const stage = this.getStage()
     if (stage.activityId !== activityId || stage.status !== "open") {
-      throw new StoreError(409, "This activity is not accepting answers right now")
+      throw new StoreError(409, "Questa attività non accetta risposte al momento")
     }
     const activity = this.requireActivity(activityId)
     this.assertCanOpen(activity)
     const definition = getActivityDefinition(activity.type)
-    if (!definition) throw new StoreError(400, `Unknown activity type "${activity.type}"`)
+    if (!definition) throw new StoreError(400, `Tipo di attività sconosciuto "${activity.type}"`)
     const parsed = definition.responseSchema(activity.config).safeParse(response)
-    if (!parsed.success) throw new StoreError(400, "Invalid answer", parsed.error.issues)
+    if (!parsed.success) throw new StoreError(400, "Risposta non valida", parsed.error.issues)
     const quizWinner: SavedDraw<MemoryQuizDraw> | null =
       activity.type === memoryQuiz.type &&
       quizScoring(activity.config as MemoryQuizConfig) === "first" &&
@@ -593,7 +588,7 @@ export class Store {
   getResults(idOrSlug: string) {
     const activity = this.requireActivity(idOrSlug)
     const definition = getActivityDefinition(activity.type)
-    if (!definition) throw new StoreError(400, `Unknown activity type "${activity.type}"`)
+    if (!definition) throw new StoreError(400, `Tipo di attività sconosciuto "${activity.type}"`)
     return {
       id: activity.id,
       slug: activity.slug,
@@ -635,13 +630,18 @@ export class Store {
    */
   drawQuiz(idOrSlug: string) {
     const activity = this.requireActivity(idOrSlug)
-    if (activity.type !== memoryQuiz.type) throw new StoreError(400, "This activity is not a memory quiz")
+    if (activity.type !== memoryQuiz.type)
+      throw new StoreError(400, "Questa attività non è un quiz di memoria")
     if (this.getSetting(`quiz-draw:${activity.id}`)) return this.getResults(activity.id)
     const stage = this.getStage()
-    if (stage.activityId !== activity.id) throw new StoreError(409, "Put this activity on stage first")
+    if (stage.activityId !== activity.id) throw new StoreError(409, "Metti prima questa attività sul palco")
     const parsedConfig = memoryQuiz.configSchema.safeParse(activity.config)
     if (!parsedConfig.success)
-      throw new StoreError(400, "Save a valid quiz before revealing the answer", parsedConfig.error.issues)
+      throw new StoreError(
+        400,
+        "Salva un quiz valido prima di rivelare la risposta",
+        parsedConfig.error.issues,
+      )
     const config = parsedConfig.data
     const withPoints = quizScoring(config) === "points"
     const right = (answer: string) => withPoints && isCorrect(config, answer)
@@ -690,10 +690,10 @@ export class Store {
   drawEstimate(idOrSlug: string) {
     const activity = this.requireActivity(idOrSlug)
     if (activity.type !== numberEstimate.type)
-      throw new StoreError(400, "This activity is not a number estimate")
+      throw new StoreError(400, "Questa attività non è una stima numerica")
     if (this.getSetting(`number-draw:${activity.id}`)) return this.getResults(activity.id)
     const stage = this.getStage()
-    if (stage.activityId !== activity.id) throw new StoreError(409, "Put this activity on stage first")
+    if (stage.activityId !== activity.id) throw new StoreError(409, "Metti prima questa attività sul palco")
     const config = numberEstimate.configSchema.parse(activity.config)
     const entries = (this.listResponses(activity.id) as StoredResponse<NumberEstimateResponse>[]).map(
       ({ userId, userName, response }) => ({ userId, name: userName, number: response.number }),
@@ -733,15 +733,15 @@ export class Store {
   drawNumber(idOrSlug: string) {
     const activity = this.requireActivity(idOrSlug)
     if (activity.type !== numberLottery.type)
-      throw new StoreError(400, "This activity is not a number lottery")
+      throw new StoreError(400, "Questa attività non è una lotteria dei numeri")
     if (this.getSetting<NumberLotteryDraw>(`number-draw:${activity.id}`)) return this.getResults(activity.id)
     const stage = this.getStage()
-    if (stage.activityId !== activity.id) throw new StoreError(409, "Put this activity on stage first")
+    if (stage.activityId !== activity.id) throw new StoreError(409, "Metti prima questa attività sul palco")
     numberLottery.configSchema.parse(activity.config)
     const entries = (this.listResponses(activity.id) as StoredResponse<NumberLotteryResponse>[]).map(
       ({ userId, userName, response }) => ({ userId, name: userName, number: response.number }),
     )
-    if (!entries.length) throw new StoreError(409, "At least one participant is required")
+    if (!entries.length) throw new StoreError(409, "È necessario almeno un partecipante")
     const number = randomInt(0, 101)
     const { closest, distance } = closestEntries(entries, number)
     const winner = closest[randomInt(closest.length)] as (typeof closest)[number]
@@ -785,23 +785,23 @@ export class Store {
       throw new StoreError(
         409,
         activity.type === numberLottery.type
-          ? "Reset this lottery before reopening entries"
-          : "Reset this estimate before reopening entries",
+          ? "Azzera questa lotteria prima di riaprire le partecipazioni"
+          : "Azzera questa stima prima di riaprire le partecipazioni",
       )
     }
     if (activity.type === memoryQuiz.type && this.getSetting(`quiz-draw:${activity.id}`)) {
-      throw new StoreError(409, "Reset this quiz before reopening answers")
+      throw new StoreError(409, "Azzera questo quiz prima di riaprire le risposte")
     }
     if (
       activity.type === numberEstimate.type &&
       !numberEstimate.configSchema.safeParse(activity.config).success
     ) {
-      throw new StoreError(400, "Save a valid number estimate before opening guesses")
+      throw new StoreError(400, "Salva una stima numerica valida prima di aprire le risposte")
     }
     if (activity.type === memoryQuiz.type) {
       const parsed = memoryQuiz.configSchema.safeParse(activity.config)
       if (!parsed.success)
-        throw new StoreError(400, "Save a valid quiz before opening answers", parsed.error.issues)
+        throw new StoreError(400, "Salva un quiz valido prima di aprire le risposte", parsed.error.issues)
     }
   }
 
@@ -841,7 +841,7 @@ export class Store {
   /** Opens or closes what is on stage, without changing it. */
   setStageStatus(status: StageStatus): Stage {
     const stage = this.getStage()
-    if (!stage.activityId) throw new StoreError(409, "Nothing is on stage")
+    if (!stage.activityId) throw new StoreError(409, "Non c'è nulla sul palco")
     return this.setStage(stage.activityId, status)
   }
 
@@ -865,7 +865,6 @@ export class Store {
               config: definition.audienceConfig
                 ? definition.audienceConfig(activity.config)
                 : activity.config,
-              membersOnly: activity.membersOnly,
               countsToLeaderboard: activity.countsToLeaderboard,
             }
           : null,
@@ -963,7 +962,6 @@ function toActivity(row: ActivityRow): Activity {
     title: row.title,
     config: JSON.parse(row.config),
     presentationId: row.presentation_id,
-    membersOnly: row.members_only === 1,
     countsToLeaderboard: row.counts_to_leaderboard === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

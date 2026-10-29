@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "../validation.ts"
 
 /**
  * The server-side half of an activity type: plain data and pure functions, no React.

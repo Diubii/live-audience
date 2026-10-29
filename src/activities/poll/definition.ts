@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "../../validation.ts"
 import { defineActivity, withoutBlankItems } from "../types.ts"
 
 const optionSchema = z.object({
@@ -8,7 +8,7 @@ const optionSchema = z.object({
 
 export const pollConfigSchema = z.object({
   question: z.string().trim().min(1).max(300),
-  /** Options left without a label are dropped. */
+  /** Opzioni left without a label are dropped. */
   options: withoutBlankItems(z.array(optionSchema).min(2).max(12), "label"),
   /** How many options each person may pick. 1 = classic single choice. */
   maxChoices: z.number().int().min(1).max(12),
@@ -24,10 +24,10 @@ export type PollResults = {
 
 export const poll = defineActivity<PollConfig, PollResponse, PollResults>({
   type: "poll",
-  label: "Poll",
-  description: "A question with fixed options. People pick one, or up to N.",
+  label: "Sondaggio",
+  description: "Una domanda con opzioni fisse. Si sceglie una risposta, o fino a N.",
   configSchema: pollConfigSchema.refine((c) => c.maxChoices <= c.options.length, {
-    message: "maxChoices cannot exceed the number of options",
+    message: "maxChoices non può superare il numero di opzioni",
     path: ["maxChoices"],
   }),
   defaultConfig: () => ({
@@ -42,17 +42,17 @@ export const poll = defineActivity<PollConfig, PollResponse, PollResults>({
     const ids = new Set(config.options.map((o) => o.id))
     return z.object({
       choices: z
-        .array(z.string().refine((id) => ids.has(id), "Unknown option"))
+        .array(z.string().refine((id) => ids.has(id), "Opzione sconosciuta"))
         .min(1)
         .max(config.maxChoices)
-        .refine((choices) => new Set(choices).size === choices.length, "Duplicate choice"),
+        .refine((choices) => new Set(choices).size === choices.length, "Scelta duplicata"),
     })
   },
   aggregate: (config, responses) => {
     const counts = new Map(config.options.map((o) => [o.id, 0]))
     for (const { response } of responses) {
       for (const id of response.choices) {
-        // Options can be removed after people voted: ignore what no longer exists.
+        // Opzioni can be removed after people voted: ignore what no longer exists.
         const current = counts.get(id)
         if (current !== undefined) counts.set(id, current + 1)
       }

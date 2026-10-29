@@ -27,6 +27,7 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist/client ./dist/client
 COPY src/server ./src/server
 COPY src/activities ./src/activities
+COPY src/validation.ts ./src/validation.ts
 RUN mkdir /data && chown node:node /data
 VOLUME /data
 USER node

@@ -21,7 +21,6 @@ export interface ActivitySummary {
   presentation: string | null
   /** How many people answered. */
   answers: number
-  membersOnly: boolean
   countsToLeaderboard: boolean
 }
 
@@ -56,9 +55,9 @@ export function useActivities() {
   return activities
 }
 
-/** "3 answers", or nothing when nobody answered. */
+/** "3 risposte", or nothing when nobody answered. */
 export function answerCount(answers: number) {
-  return answers === 0 ? null : `${answers} ${answers === 1 ? "answer" : "answers"}`
+  return answers === 0 ? null : `${answers} ${answers === 1 ? "risposta" : "risposte"}`
 }
 
 export function ActivityList() {
@@ -80,11 +79,11 @@ export function ActivityList() {
 
   return (
     <div className="space-y-10">
-      <PageHeader kicker="Live admin" title="Activities" />
+      <PageHeader kicker="Admin" title="Attività" />
       {types.data && presentations.data && (
         <NewActivity types={types.data} presentations={presentations.data} />
       )}
-      {activities.data?.length === 0 && <p className="text-sm text-slate-500">No activities yet.</p>}
+      {activities.data?.length === 0 && <p className="text-sm text-slate-500">Ancora nessuna attività.</p>}
       {groups.map((group) => (
         <section key={group.key ?? ""} className="space-y-4">
           <div className="flex items-center gap-3 px-1">
@@ -101,7 +100,7 @@ export function ActivityList() {
                   />
                 </Link>
               ) : (
-                <span className="text-slate-500">Not in a presentation</span>
+                <span className="text-slate-500">Fuori dalle presentazioni</span>
               )}
             </h2>
             {group.presentation && (
@@ -126,12 +125,12 @@ export function PresentationResetButton({
   return (
     <Button
       variant="ghost"
-      title="Delete every answer, draw and point of its activities"
+      title="Cancella risposte, estrazioni e punti di tutte le sue attività"
       onClick={async () => {
         if (await resetPresentation(presentation)) onReset()
       }}
     >
-      <Icon name="rotate-ccw" /> Reset answers
+      <Icon name="rotate-ccw" /> Azzera le risposte
     </Button>
   )
 }
@@ -149,7 +148,9 @@ export function ActivityRows({
   const stage = useStage()
   return (
     <Card className="divide-y-[1.5px] divide-white p-0">
-      {activities.length === 0 && <p className="px-6 py-5 text-sm text-slate-500">No activities yet.</p>}
+      {activities.length === 0 && (
+        <p className="px-6 py-5 text-sm text-slate-500">Ancora nessuna attività.</p>
+      )}
       {activities.map((a) => {
         const onStage = stage?.activity?.id === a.id
         const label = types.find((t) => t.type === a.type)?.label ?? a.type
@@ -165,19 +166,20 @@ export function ActivityRows({
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 <Tag>{label}</Tag>
                 <code className="font-mono">{a.slug}</code>
-                {a.membersOnly && <Tag>Soci only</Tag>}
-                {!a.countsToLeaderboard && <Tag>Off the leaderboard</Tag>}
+                {!a.countsToLeaderboard && <Tag>Fuori classifica</Tag>}
                 {answerCount(a.answers) && <span>· {answerCount(a.answers)}</span>}
               </div>
             </div>
             {onStage && (
-              <Tag tone={stage?.status === "open" ? "live" : "warn"}>on stage · {stage?.status}</Tag>
+              <Tag tone={stage?.status === "open" ? "live" : "warn"}>
+                sul palco · {stage?.status === "open" ? "aperta" : "chiusa"}
+              </Tag>
             )}
             <Button
               variant="ghost"
               className="px-2.5"
-              title="Reset answers"
-              aria-label={`Reset the answers of ${a.title}`}
+              title="Azzera le risposte"
+              aria-label={`Azzera le risposte di ${a.title}`}
               onClick={async () => {
                 if (await resetActivity(a)) onReset()
               }}
@@ -189,7 +191,7 @@ export function ActivityRows({
               disabled={onStage && stage?.status === "open"}
               onClick={() => void controlStage({ activity: a.id, status: "open" })}
             >
-              <Icon name="play" /> Open
+              <Icon name="play" /> Apri
             </Button>
           </div>
         )
@@ -246,24 +248,28 @@ export function NewActivity({
           void create()
         }}
       >
-        <Field label="Type">
+        <Field label="Tipo">
           <Select
             value={type}
             onChange={setType}
             options={types.map((t) => ({ value: t.type, label: t.label, description: t.description }))}
           />
         </Field>
-        <Field label="Title (admin only)">
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Dinner poll" />
+        <Field label="Titolo (solo admin)">
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Sondaggio cena" />
         </Field>
-        <Field label="Slug (used by the API)">
-          <Input value={effectiveSlug} onChange={(e) => setSlug(e.target.value)} placeholder="dinner-poll" />
+        <Field label="Slug (usato dall'API)">
+          <Input
+            value={effectiveSlug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="sondaggio-cena"
+          />
         </Field>
-        <Field label="Presentation">
+        <Field label="Presentazione">
           <PresentationSelect presentations={presentations} value={presentation} onChange={setPresentation} />
         </Field>
         <Button type="submit" variant="primary" disabled={!title.trim() || !effectiveSlug} className="py-2">
-          <Icon name="plus" /> Create
+          <Icon name="plus" /> Crea
         </Button>
       </form>
       {error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
@@ -285,7 +291,10 @@ export function PresentationSelect({
     <Select
       value={value}
       onChange={onChange}
-      options={[{ value: "", label: "None" }, ...presentations.map((p) => ({ value: p.id, label: p.title }))]}
+      options={[
+        { value: "", label: "Nessuna" },
+        ...presentations.map((p) => ({ value: p.id, label: p.title })),
+      ]}
     />
   )
 }

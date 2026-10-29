@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "../../validation.ts"
 import { defineActivity } from "../types.ts"
 
 const configSchema = z.object({
@@ -6,7 +6,7 @@ const configSchema = z.object({
 })
 export type NumberLotteryConfig = z.infer<typeof configSchema>
 export type NumberLotteryResponse = { number: number }
-/** A guess with the name of whoever made it, as the IdP knows them. */
+/** A guess with the name of whoever made it, as they signed in. */
 export type NumberLotteryEntry = { name: string; number: number }
 export type NumberLotteryDraw = {
   number: number
@@ -30,11 +30,11 @@ export function closestEntries<Entry extends NumberLotteryEntry>(entries: Entry[
 export const numberLottery = defineActivity<NumberLotteryConfig, NumberLotteryResponse, NumberLotteryResults>(
   {
     type: "number-lottery",
-    label: "Number lottery",
-    description: "Pick a number from 0 to 100. The closest guess to the drawn number wins.",
+    label: "Lotteria dei numeri",
+    description: "Scegli un numero da 0 a 100. Vince chi si avvicina di più al numero estratto.",
     configSchema,
-    defaultConfig: () => ({ prompt: "Pick a number from 0 to 100 to win a gadget" }),
-    drawLabel: "Draw the number",
+    defaultConfig: () => ({ prompt: "Scegli un numero da 0 a 100 per vincere un gadget" }),
+    drawLabel: "Estrai il numero",
     responseSchema: () =>
       z.object({
         number: z.number().int().min(0).max(100),
@@ -42,7 +42,7 @@ export const numberLottery = defineActivity<NumberLotteryConfig, NumberLotteryRe
     aggregate: (config, responses) => ({
       prompt: config.prompt,
       totalParticipants: responses.length,
-      // Names come from the IdP: winners are announced on the presentation.
+      // Names are the sign-in ones: winners are announced on the presentation.
       entries: responses.map(({ userName, response }) => ({ name: userName, number: response.number })),
       draw: null,
     }),

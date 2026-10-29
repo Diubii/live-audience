@@ -56,6 +56,14 @@ const migrations = [
   ALTER TABLE activities ADD COLUMN members_only INTEGER NOT NULL DEFAULT 0;
   ALTER TABLE activities ADD COLUMN counts_to_leaderboard INTEGER NOT NULL DEFAULT 1;
   `,
+  // Sign-in with a name instead of an identity provider: older sessions go (they may carry admin
+  // rights), a name is reserved while signed in, and without roles nothing is members-only.
+  `
+  DELETE FROM sessions;
+  ALTER TABLE sessions ADD COLUMN name_key TEXT;
+  CREATE INDEX sessions_name_key ON sessions (name_key);
+  ALTER TABLE activities DROP COLUMN members_only;
+  `,
 ]
 
 export type Database = DatabaseSync

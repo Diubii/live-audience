@@ -13,7 +13,7 @@ export interface ActivityUI<Config = unknown, Response = unknown, Results = unkn
   /**
    * What an audience member sees while the activity is on stage. `response` is their saved answer
    * (or null). When `open` is false answers are locked: show the saved one, read-only.
-   * `me` is the signed-in person as the IdP knows them: never ask for their name. `outcome` arrives
+   * `me` is the signed-in person, with the name they joined with: never ask for their name. `outcome` arrives
    * once a game with a draw is decided (lottery, estimate, quiz): celebrate or commiserate.
    */
   Audience: ComponentType<{

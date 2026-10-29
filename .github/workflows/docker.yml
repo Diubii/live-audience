@@ -40,7 +40,7 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           push: true
-          tags: ghcr.io/polinetworkorg/live-audience:build-${{ github.sha }}-${{ matrix.suffix }}
+          tags: ghcr.io/diubii/live-audience:build-${{ github.sha }}-${{ matrix.suffix }}
 
   manifest:
     name: Publish multi-arch manifest
@@ -59,7 +59,7 @@ jobs:
       - name: Publish latest manifest
         run: |
           docker buildx imagetools create \
-            --tag ghcr.io/polinetworkorg/live-audience:latest \
-            ghcr.io/polinetworkorg/live-audience:build-${{ github.sha }}-amd64 \
-            ghcr.io/polinetworkorg/live-audience:build-${{ github.sha }}-arm64
-          docker buildx imagetools inspect ghcr.io/polinetworkorg/live-audience:latest
+            --tag ghcr.io/diubii/live-audience:latest \
+            ghcr.io/diubii/live-audience:build-${{ github.sha }}-amd64 \
+            ghcr.io/diubii/live-audience:build-${{ github.sha }}-arm64
+          docker buildx imagetools inspect ghcr.io/diubii/live-audience:latest

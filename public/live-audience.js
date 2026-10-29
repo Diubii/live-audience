@@ -1,5 +1,5 @@
 /**
- * PoliNetwork Live: client for HTML presentations.
+ * Quiz Live: client for HTML presentations.
  *
  *   import { LiveAudience } from "https://live.example.org/live-audience.js"
  *   const live = new LiveAudience({ url: "https://live.example.org", key: "la_..." })
@@ -20,7 +20,7 @@
 export class LiveAudience {
   /** @param {{ url: string, key: string }} options */
   constructor({ url, key }) {
-    if (!url || !key) throw new Error("LiveAudience needs { url, key }")
+    if (!url || !key) throw new Error("LiveAudience richiede { url, key }")
     this.url = url.replace(/\/+$/, "")
     this.key = key
   }

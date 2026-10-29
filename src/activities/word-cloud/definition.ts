@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "../../validation.ts"
 import { defineActivity } from "../types.ts"
 
 export const wordCloudConfigSchema = z.object({
@@ -21,8 +21,8 @@ export function normalizeWord(text: string): string {
 
 export const wordCloud = defineActivity<WordCloudConfig, WordCloudResponse, WordCloudResults>({
   type: "word-cloud",
-  label: "Word cloud",
-  description: "Free words or short phrases. The more people repeat one, the larger it appears.",
+  label: "Nuvola di parole",
+  description: "Parole libere o brevi frasi. Più persone le ripetono, più grandi appaiono.",
   configSchema: wordCloudConfigSchema,
   defaultConfig: () => ({ prompt: "", maxWords: 3 }),
   responseSchema: (config) =>

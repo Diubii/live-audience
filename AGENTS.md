@@ -13,9 +13,9 @@ See README.md for what the app is, how to run it and how activity types are stru
 
 ## Previewing
 
-`cp .env.example .env && pnpm dev`, then open
-`http://localhost:5173/auth/dev-login?as=admin&returnTo=/admin` (or `as=socio` / `as=guest`, plus
-`&n=2` for another person). No IdP needed.
+`cp .env.example .env && pnpm dev`, then open `http://localhost:5173/admin` and sign in with any
+name and the `ADMIN_PASSWORD` of `.env`. The audience page (`/`) only asks for a name: use a private
+window or another browser to be a second person.
 
 ## Commits
 

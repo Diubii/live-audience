@@ -6,10 +6,10 @@ import type { AuthVariables, SessionUser } from "../src/server/auth.ts"
 import { openDatabase } from "../src/server/db.ts"
 import { Store } from "../src/server/store.ts"
 
-const admin: SessionUser = { id: "admin", name: "Ada", canParticipate: true, isAdmin: true }
-const socio: SessionUser = { id: "socio", name: "Sara", canParticipate: true, isAdmin: false }
-const guest: SessionUser = { id: "guest", name: "Nico", canParticipate: false, isAdmin: false }
-const users: Record<string, SessionUser> = { admin, socio, guest }
+const admin: SessionUser = { id: "admin", name: "Ada", isAdmin: true }
+const player: SessionUser = { id: "player", name: "Sara", isAdmin: false }
+const guest: SessionUser = { id: "guest", name: "Nico", isAdmin: false }
+const users: Record<string, SessionUser> = { admin, player, guest }
 
 /** Tests pick the signed-in user with an `x-test-user` header instead of a session cookie. */
 const session: MiddlewareHandler<{ Variables: AuthVariables }> = async (c, next) => {
@@ -65,7 +65,7 @@ describe("a word cloud, driven by a presentation", () => {
   it("validates free answers, replaces them, publishes counts and supports close/reset", async () => {
     const created = await call("/api/admin/activities", {
       as: "admin",
-      body: { type: "word-cloud", title: "Gadgets", slug: "gadget-ideas", membersOnly: true },
+      body: { type: "word-cloud", title: "Gadgets", slug: "gadget-ideas" },
     })
     expect(created.status).toBe(201)
     const { id } = await created.json()
@@ -84,12 +84,11 @@ describe("a word cloud, driven by a presentation", () => {
         as,
         body: { activityId: id, response: { words } },
       })
-    expect((await respond("socio", ["felpa"])).status).toBe(409)
+    expect((await respond("player", ["felpa"])).status).toBe(409)
     await call("/api/v1/stage", { key, body: { activity: "gadget-ideas" } })
-    expect((await respond("guest", ["felpa"])).status).toBe(403)
-    expect((await respond("socio", ["Felpa", " FELPA "])).status).toBe(200)
+    expect((await respond("player", ["Felpa", " FELPA "])).status).toBe(200)
     expect((await respond("admin", ["FELPA", "sticker"])).status).toBe(200)
-    expect((await respond("socio", [" "])).status).toBe(400)
+    expect((await respond("player", [" "])).status).toBe(400)
     const readResults = async () =>
       (await (await call("/api/v1/activities/gadget-ideas/results", { key })).json()).results
     expect(await readResults()).toEqual({
@@ -100,17 +99,17 @@ describe("a word cloud, driven by a presentation", () => {
         { text: "sticker", count: 1 },
       ],
     })
-    expect((await respond("socio", ["sticker"])).status).toBe(200)
+    expect((await respond("player", ["sticker"])).status).toBe(200)
     expect((await readResults()).words).toEqual([
       { text: "sticker", count: 2 },
       { text: "felpa", count: 1 },
     ])
-    expect(await (await call("/api/audience/stage", { as: "socio" })).json()).toMatchObject({
+    expect(await (await call("/api/audience/stage", { as: "player" })).json()).toMatchObject({
       activity: { type: "word-cloud", config: { prompt: "Your ideas?" } },
       myResponse: { words: ["sticker"] },
     })
     await call("/api/v1/stage/close", { key, method: "POST" })
-    expect((await respond("socio", ["felpa"])).status).toBe(409)
+    expect((await respond("player", ["felpa"])).status).toBe(409)
     const answers = async () =>
       (await (await call("/api/admin/activities", { as: "admin" })).json())[0].answers
     expect(await answers()).toBe(2)
@@ -121,33 +120,32 @@ describe("a word cloud, driven by a presentation", () => {
 })
 
 describe("wheel entries", () => {
-  it("puts each member on the wheel once, under their IdP name, and closes entries", async () => {
+  it("puts each player on the wheel once, under their sign-in name, and closes entries", async () => {
     const created = await call("/api/admin/activities", {
       as: "admin",
-      body: { type: "wheel", title: "Draw", slug: "fortune-wheel", membersOnly: true },
+      body: { type: "wheel", title: "Draw", slug: "fortune-wheel" },
     })
     expect(created.status).toBe(201)
     const { id } = await created.json()
     const key = store.getApiKey()
     const join = (as: string, response: unknown = {}) =>
       call("/api/audience/respond", { as, body: { activityId: id, response } })
-    expect((await join("socio")).status).toBe(409)
+    expect((await join("player")).status).toBe(409)
     await call("/api/v1/stage", { key, body: { activity: "fortune-wheel" } })
-    expect((await join("guest")).status).toBe(403)
-    expect((await join("socio", { name: "Typed name" })).status).toBe(200) // the typed name is ignored
-    expect((await join("socio")).status).toBe(200) // joining twice is still one entry
+    expect((await join("player", { name: "Typed name" })).status).toBe(200) // the typed name is ignored
+    expect((await join("player")).status).toBe(200) // joining twice is still one entry
     expect((await join("admin")).status).toBe(200)
     const results = await (await call("/api/v1/activities/fortune-wheel/results", { key })).json()
     expect(results.results).toEqual({
-      prompt: "Join the wheel for a chance to win",
+      prompt: "Partecipa alla ruota per provare a vincere",
       totalParticipants: 2,
       names: expect.arrayContaining(["Sara", "Ada"]),
     })
     expect(JSON.stringify(results)).not.toContain("Typed name")
     expect(JSON.stringify(results)).not.toContain("userId")
     await call("/api/v1/stage/close", { key, method: "POST" })
-    expect((await join("socio")).status).toBe(409)
-    expect(await (await call("/api/audience/stage", { as: "socio" })).json()).toMatchObject({
+    expect((await join("player")).status).toBe(409)
+    expect(await (await call("/api/audience/stage", { as: "player" })).json()).toMatchObject({
       status: "closed",
       myResponse: {},
     })
@@ -167,11 +165,11 @@ describe("wheel entries", () => {
 describe("access", () => {
   it("keeps the admin API to admins", async () => {
     expect((await call("/api/admin/activities")).status).toBe(401)
-    expect((await call("/api/admin/activities", { as: "socio" })).status).toBe(403)
+    expect((await call("/api/admin/activities", { as: "player" })).status).toBe(403)
     expect((await call("/api/admin/activities", { as: "admin" })).status).toBe(200)
   })
 
-  it("lets anyone signed in play, and only Soci answer activities marked Soci only", async () => {
+  it("lets anyone signed in play", async () => {
     expect((await call("/api/audience/stage")).status).toBe(401)
     expect((await call("/api/audience/stage", { as: "guest" })).status).toBe(200)
     const { id } = await createPoll()
@@ -179,17 +177,11 @@ describe("access", () => {
     await call("/api/v1/stage", { key, body: { activity: "dinner" } })
     const vote = (as: string) =>
       call("/api/audience/respond", { as, body: { activityId: id, response: { choices: ["a"] } } })
-    // Open to everyone by default.
     expect(await (await call("/api/audience/stage", { as: "guest" })).json()).toMatchObject({
-      activity: { id, membersOnly: false, countsToLeaderboard: true },
+      activity: { id, countsToLeaderboard: true },
     })
     expect((await vote("guest")).status).toBe(200)
-    await call("/api/admin/activities/dinner", { as: "admin", method: "PATCH", body: { membersOnly: true } })
-    expect(await (await call("/api/audience/stage", { as: "guest" })).json()).toMatchObject({
-      activity: { id, membersOnly: true },
-    })
-    expect((await vote("guest")).status).toBe(403)
-    expect((await vote("socio")).status).toBe(200)
+    expect((await vote("player")).status).toBe(200)
     expect((await vote("admin")).status).toBe(200)
   })
 
@@ -211,22 +203,22 @@ describe("a poll, driven by a presentation", () => {
     const vote = (as: string, choices: string[]) =>
       call("/api/audience/respond", { as, body: { activityId: id, response: { choices } } })
 
-    expect((await vote("socio", ["a"])).status).toBe(409) // not on stage yet
+    expect((await vote("player", ["a"])).status).toBe(409) // not on stage yet
 
     const opened = await call("/api/v1/stage", { key, body: { activity: "dinner" } })
     expect(await opened.json()).toMatchObject({ status: "open", activity: { slug: "dinner" } })
 
-    const stage = await (await call("/api/audience/stage", { as: "socio" })).json()
+    const stage = await (await call("/api/audience/stage", { as: "player" })).json()
     expect(stage).toMatchObject({ status: "open", activity: { id, type: "poll" }, myResponse: null })
 
-    expect((await vote("socio", ["a"])).status).toBe(200)
-    expect((await vote("socio", ["b"])).status).toBe(200) // changing your mind replaces the vote
+    expect((await vote("player", ["a"])).status).toBe(200)
+    expect((await vote("player", ["b"])).status).toBe(200) // changing your mind replaces the vote
     expect((await vote("admin", ["b"])).status).toBe(200)
-    expect((await vote("socio", ["zzz"])).status).toBe(400)
-    expect((await vote("socio", ["a", "b"])).status).toBe(400) // maxChoices is 1
+    expect((await vote("player", ["zzz"])).status).toBe(400)
+    expect((await vote("player", ["a", "b"])).status).toBe(400) // maxChoices is 1
 
     await call("/api/v1/stage/close", { key, method: "POST" })
-    expect((await vote("socio", ["a"])).status).toBe(409)
+    expect((await vote("player", ["a"])).status).toBe(409)
 
     const results = await (await call("/api/v1/activities/dinner/results", { key })).json()
     expect(results.results).toEqual({
@@ -295,7 +287,7 @@ describe("a poll, driven by a presentation", () => {
     await call("/api/v1/stage", { key, body: { activity: "dinner" } })
     expect((await patch({ type: "wheel" })).status).toBe(409) // on stage
     await call("/api/audience/respond", {
-      as: "socio",
+      as: "player",
       body: { activityId: id, response: { choices: ["a"] } },
     })
     await call("/api/v1/stage/clear", { key, method: "POST" })

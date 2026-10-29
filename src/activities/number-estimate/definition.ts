@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "../../validation.ts"
 import type { NumberLotteryEntry, NumberLotteryResponse } from "../number-lottery/definition.ts"
 import { defineActivity } from "../types.ts"
 
@@ -31,11 +31,12 @@ export const numberEstimate = defineActivity<
   NumberEstimateResults
 >({
   type: "number-estimate",
-  label: "Guess the real number",
-  description: "Guess a real figure. The closest guess wins; ties select one winner randomly.",
+  label: "Indovina il numero vero",
+  description:
+    "Indovina una cifra reale. Vince chi si avvicina di più; in caso di parità si estrae un vincitore a sorte.",
   configSchema,
-  defaultConfig: () => ({ prompt: "Guess the real number", target: 0 }),
-  drawLabel: "Reveal the real number",
+  defaultConfig: () => ({ prompt: "Indovina il numero vero", target: 0 }),
+  drawLabel: "Rivela il numero vero",
   responseSchema: () =>
     z.object({
       number: z.number().int().min(0).max(1_000_000),

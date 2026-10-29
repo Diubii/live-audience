@@ -6,7 +6,7 @@ import { type WheelConfig, type WheelResponse, type WheelResults, wheel } from "
 
 function Editor({ config, onChange }: { config: WheelConfig; onChange: (config: WheelConfig) => void }) {
   return (
-    <Field label="Prompt">
+    <Field label="Testo della domanda">
       <Textarea value={config.prompt} onChange={(event) => onChange({ prompt: event.target.value })} />
     </Field>
   )
@@ -43,23 +43,23 @@ function Audience({
       <ShownAs name={me.name} />
       {open && !response && (
         <SubmitButton disabled={saving} onClick={() => void join()}>
-          {saving ? "Joining…" : "Join the wheel"}
+          {saving ? "Iscrizione…" : "Partecipa alla ruota"}
         </SubmitButton>
       )}
       {!open ? (
         response ? (
-          <Verdict tone="info" icon="eye" title="You're on the wheel">
-            Fingers crossed 🤞 Watch the screen while it spins.
+          <Verdict tone="info" icon="eye" title="Sei sulla ruota">
+            Dita incrociate 🤞 Guarda lo schermo mentre gira.
           </Verdict>
         ) : (
-          <Verdict tone="info" icon="hourglass" title="Too late!">
-            Entries are closed: the wheel spins without you this time.
+          <Verdict tone="info" icon="hourglass" title="Troppo tardi!">
+            Le iscrizioni sono chiuse: questa volta la ruota gira senza di te.
           </Verdict>
         )
       ) : response ? (
-        <Saved id={response}>You're in. Good luck!</Saved>
+        <Saved id={response}>Ci sei. Buona fortuna!</Saved>
       ) : (
-        <Hint className="text-center">One entry per person.</Hint>
+        <Hint className="text-center">Una partecipazione a persona.</Hint>
       )}
     </div>
   )
@@ -69,7 +69,7 @@ function Results({ results }: { config: WheelConfig; results: WheelResults }) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-slate-500">
-        <b className="font-display text-lg font-medium text-pn">{results.totalParticipants}</b> participants
+        <b className="font-display text-lg font-medium text-pn">{results.totalParticipants}</b> partecipanti
       </p>
       <ol className="max-h-80 list-decimal space-y-1.5 overflow-auto pl-6 text-sm text-slate-700 marker:font-display marker:text-slate-400">
         {results.names.map((name, index) => (

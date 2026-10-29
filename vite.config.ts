@@ -13,5 +13,6 @@ export default defineConfig({
     port: Number(process.env.CLIENT_PORT ?? 5173),
     strictPort: true,
     proxy: { "/api": server, "/auth": server, "/healthz": server },
+    allowedHosts: [".trycloudflare.com", "live.diubi.dev"],
   },
 })
