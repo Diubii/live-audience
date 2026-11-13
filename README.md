@@ -287,3 +287,34 @@ Ogni tipo vive in `src/activities/<type>/` e comprende:
 Salvataggio, validazione, risposta unica per persona, controllo del palco, API e
 aggiornamenti in diretta sono già disponibili. `src/activities/poll/` è l’implementazione
 di riferimento. I messaggi standard di validazione sono in italiano tramite `src/validation.ts`.
+
+## Sincronizzare le domande della presentazione di Chiara
+
+Il quiz supporta `pointsMultiplier: 2` per le domande a punti doppi; il valore normale
+è 1, anche per le attività precedenti. L'amministratore può modificarlo in **Valore dei punti**.
+Il moltiplicatore viene applicato dal server ai punti salvati e alla classifica.
+
+Per preparare le attività dall'HTML, comprese le soluzioni e le indicazioni degli `aside`:
+
+```sh
+python3 scripts/extract-chiara.py ../presentazione-chiara/prove/slideshow.slides.html data/chiara-activities.json
+node src/server/sync-activities.ts data/chiara-activities.json data/live-audience.db
+```
+
+Il secondo comando mostra un'anteprima. Dopo aver controllato le configurazioni del
+file JSON, sincronizza il database locale con il server dell'app fermo:
+
+```sh
+node src/server/sync-activities.ts data/chiara-activities.json data/live-audience.db --apply
+```
+
+L'applicazione crea prima un backup SQLite in `data/backups/`. L'importazione mantiene
+gli identificativi e il palco, non elimina attività o risposte e si interrompe se una
+configurazione da cambiare contiene già risposte o un esito salvato. Tutto il gruppo
+viene aggiornato in una transazione. Il file JSON contiene le soluzioni: resta sotto
+`data/`, escluso da Git, e non va pubblicato tra le risorse del client.
+
+Le quattro foto degli attori diventano i relativi nomi sui telefoni. Le immagini da
+riconoscere restano nella proiezione; birra e dinosauro richiedono una risposta scritta.
+Gli elementi decorativi della rivelazione non diventano opzioni. La sezione che segue
+`domande-doppi-punti` usa il moltiplicatore 2, come confermato per questa presentazione.

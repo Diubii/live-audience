@@ -20,6 +20,7 @@ const configSchema = z
      * and keep working as "first".
      */
     scoring: z.enum(["points", "first"]).optional(),
+    pointsMultiplier: z.union([z.literal(1), z.literal(2)]).optional(),
     answerMode: z.enum(["choice", "order"]).optional(),
     choices: withoutBlankItems(z.array(z.string().trim().min(1).max(32)).min(2).max(6)).optional(),
     acceptedAnswers: withoutBlankItems(z.array(z.string().trim().min(1).max(120)).min(1).max(10)),
@@ -108,6 +109,7 @@ export const memoryQuiz = defineActivity<MemoryQuizConfig, MemoryQuizResponse, M
   audienceConfig: (config) => ({
     question: config.question,
     scoring: quizScoring(config),
+    ...(config.pointsMultiplier ? { pointsMultiplier: config.pointsMultiplier } : {}),
     ...(config.answerMode ? { answerMode: config.answerMode, choices: config.choices } : {}),
   }),
   aggregate: (config, responses) => ({

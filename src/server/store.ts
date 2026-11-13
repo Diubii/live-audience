@@ -472,10 +472,15 @@ export class Store {
   ): ScoreRow[] {
     const responses = this.listResponses(activityId) as StoredResponse<Response>[]
     const openedAt = this.openedAt(activityId, responses)
+    const activity = this.requireActivity(activityId)
+    const multiplier =
+      activity.type === memoryQuiz.type
+        ? (memoryQuiz.configSchema.parse(activity.config).pointsMultiplier ?? 1)
+        : 1
     return responses.map((entry) => ({
       userId: entry.userId,
       userName: entry.userName,
-      points: scorePoints(accuracy(entry), entry.updatedAt - openedAt),
+      points: scorePoints(accuracy(entry), entry.updatedAt - openedAt) * multiplier,
     }))
   }
 

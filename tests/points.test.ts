@@ -187,3 +187,31 @@ describe("points", () => {
     expect(phone.outcome.points).toBe(phone.leaderboard.top[0].points)
   })
 })
+
+describe("double-point quizzes", () => {
+  it.each(["points", "first"])(
+    "doubles the saved score in %s mode and exports the multiplier without the solution",
+    (scoring) => {
+      const { store, person } = setup()
+      const presentation = store.createPresentation({ slug: "double", title: "Double" })
+      const activity = store.createActivity({
+        type: "memory-quiz",
+        slug: "double-quiz",
+        title: "Quiz",
+        presentationId: presentation.id,
+      })
+      store.updateActivity(activity.id, { config: { ...quiz, scoring, pointsMultiplier: 2 } })
+      store.setStage(activity.id, "open")
+      expect(store.getAudienceStage().activity?.config).toMatchObject({ pointsMultiplier: 2 })
+      expect(JSON.stringify(store.getAudienceStage())).not.toContain("Blue")
+      later(15_000)
+      store.respond(activity.id, person("a"), { answer: "Blue" })
+      store.drawActivity(activity.id)
+      expect(store.getAudienceOutcome(activity.id, "a")?.points).toBe(1500)
+      expect(store.getLeaderboard("double").leaderboard[0]?.points).toBe(1500)
+      store.drawActivity(activity.id)
+      expect(store.getAudienceOutcome(activity.id, "a")?.points).toBe(1500)
+      expect(() => store.updateActivity(activity.id, { config: { ...quiz, pointsMultiplier: 3 } })).toThrow()
+    },
+  )
+})

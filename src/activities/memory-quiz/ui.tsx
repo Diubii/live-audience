@@ -50,6 +50,17 @@ function Editor({
           ]}
         />
       </Field>
+      <Field label="Valore dei punti">
+        <Select
+          className="w-auto"
+          value={String(config.pointsMultiplier ?? 1)}
+          onChange={(value) => onChange({ ...config, pointsMultiplier: Number(value) as 1 | 2 })}
+          options={[
+            { value: "1", label: "Punti normali (fino a 1000)" },
+            { value: "2", label: "Punti doppi (fino a 2000)" },
+          ]}
+        />
+      </Field>
       <Field label="Formato della risposta">
         <Select
           className="w-auto"
@@ -90,7 +101,7 @@ function Editor({
       </Field>
       <p className="text-sm text-slate-500">
         {quizScoring(config) === "points"
-          ? "Le risposte restano nascoste finché non le riveli. Ogni risposta corretta vale fino a 1000 punti, che scendono a 500 nei primi 30 secondi; vince la più veloce."
+          ? `Le risposte restano nascoste finché non le riveli. Ogni risposta corretta vale fino a ${1000 * (config.pointsMultiplier ?? 1)} punti, che scendono a ${500 * (config.pointsMultiplier ?? 1)} nei primi 30 secondi; vince la più veloce.`
           : "La prima risposta corretta ricevuta dal server vince e chiude subito il quiz."}
       </p>
     </div>
@@ -194,6 +205,7 @@ function Audience({
         {saving ? "Invio…" : response ? "Aggiorna risposta" : "Invia risposta"}
       </SubmitButton>
       <Hint>
+        {config.pointsMultiplier === 2 && "Questa domanda vale punti doppi. "}
         {withPoints
           ? "Ogni risposta corretta vale punti, di più se è veloce. La risposta viene rivelata alla fine."
           : "La prima risposta corretta vince e chiude il quiz."}
